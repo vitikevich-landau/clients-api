@@ -31,3 +31,7 @@ Makefile
 docker-compose.yml
 Dockerfile
 .golangci.yml
+
+# Интерактивная документация — читается из репозитория, в образе не нужна.
+# ВАЖНО: docs/docs.go исключать нельзя, он импортируется в router.go.
+docs/request-flow.html

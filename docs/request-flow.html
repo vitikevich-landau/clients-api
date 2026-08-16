@@ -1,0 +1,1585 @@
+<!doctype html>
+<html lang="ru" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clients API — путь запроса</title>
+<style>
+/* ===========================================================================
+   Тема. Работает и по системной настройке, и по кнопке-переключателю.
+   =========================================================================== */
+:root{
+  color-scheme: light dark;
+  --bg:#f6f7f9;      --panel:#ffffff;   --panel-2:#fafbfc;
+  --ink:#1a1d21;     --ink-2:#5a6470;   --ink-3:#8b949e;
+  --line:#e3e6ea;    --line-2:#d0d5dc;
+  --accent:#2f6feb;  --accent-soft:#e8f0fe;
+  --ok:#1a7f4b;      --ok-soft:#e6f4ec;
+  --warn:#a15c00;    --warn-soft:#fdf3e2;
+  --err:#c0392b;     --err-soft:#fdecea;
+  --code-bg:#f3f5f7; --code-ink:#24292f;
+  --kw:#a626a4;      --str:#0a7d3f;     --com:#8b949e;  --num:#c18401; --fn:#2f6feb;
+  --shadow:0 1px 2px rgba(0,0,0,.05), 0 4px 12px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root[data-theme="auto"]{
+    --bg:#0f1216;    --panel:#171b21;   --panel-2:#1c2128;
+    --ink:#e6edf3;   --ink-2:#9aa5b1;   --ink-3:#6e7781;
+    --line:#262c34;  --line-2:#333b45;
+    --accent:#5b9cff; --accent-soft:#16233a;
+    --ok:#4ec98a;    --ok-soft:#13291d;
+    --warn:#e0a458;  --warn-soft:#2b2114;
+    --err:#f2776b;   --err-soft:#2d1917;
+    --code-bg:#11151a; --code-ink:#d5dde5;
+    --kw:#d2a8ff;    --str:#7ee787;     --com:#6e7781;  --num:#f0c674; --fn:#79b8ff;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1216;    --panel:#171b21;   --panel-2:#1c2128;
+  --ink:#e6edf3;   --ink-2:#9aa5b1;   --ink-3:#6e7781;
+  --line:#262c34;  --line-2:#333b45;
+  --accent:#5b9cff; --accent-soft:#16233a;
+  --ok:#4ec98a;    --ok-soft:#13291d;
+  --warn:#e0a458;  --warn-soft:#2b2114;
+  --err:#f2776b;   --err-soft:#2d1917;
+  --code-bg:#11151a; --code-ink:#d5dde5;
+  --kw:#d2a8ff;    --str:#7ee787;     --com:#6e7781;  --num:#f0c674; --fn:#79b8ff;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.35);
+}
+:root[data-theme="light"]{ color-scheme: light; }
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:96px;               /* место под фиксированную панель управления */
+  overflow-x:hidden;
+}
+code,pre,.mono{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace}
+
+.wrap{max-width:1360px;margin:0 auto;padding:0 20px}
+
+/* ============================ Шапка ============================ */
+header{border-bottom:1px solid var(--line);background:var(--panel)}
+.head-top{display:flex;align-items:flex-start;gap:20px;padding:22px 0 16px;flex-wrap:wrap}
+h1{margin:0;font-size:22px;letter-spacing:-.2px}
+.sub{margin:4px 0 0;color:var(--ink-2);font-size:13.5px;max-width:70ch}
+.sub a{color:var(--accent);text-decoration:none}
+.sub a:hover{text-decoration:underline}
+.spacer{flex:1 1 auto}
+.tbtn{
+  border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink-2);
+  border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer;white-space:nowrap
+}
+.tbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ============================ Вкладки сценариев ============================ */
+.tabs{display:flex;gap:8px;padding-bottom:14px;flex-wrap:wrap}
+.tab{
+  border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink-2);
+  border-radius:10px;padding:9px 14px;cursor:pointer;font-size:13.5px;
+  display:flex;align-items:center;gap:9px;transition:.12s
+}
+.tab:hover{border-color:var(--accent)}
+.tab[aria-selected="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+.tab .num{
+  width:20px;height:20px;border-radius:50%;background:var(--line);color:var(--ink-2);
+  display:grid;place-items:center;font-size:11px;font-weight:700;flex:none
+}
+.tab[aria-selected="true"] .num{background:var(--accent);color:#fff}
+
+/* ============================ Карточка запроса ============================ */
+.reqcard{
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  margin:18px 0;box-shadow:var(--shadow);overflow:hidden
+}
+.reqline{display:flex;align-items:center;gap:12px;padding:14px 16px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.verb{
+  font:700 12px/1 ui-monospace,monospace;padding:6px 9px;border-radius:6px;
+  background:var(--accent);color:#fff;letter-spacing:.5px
+}
+.path{font:13.5px/1.4 ui-monospace,monospace;color:var(--ink);word-break:break-all;flex:1 1 260px}
+.badge{font:700 12px/1 ui-monospace,monospace;padding:6px 10px;border-radius:6px;white-space:nowrap}
+.badge.ok{background:var(--ok-soft);color:var(--ok)}
+.badge.err{background:var(--err-soft);color:var(--err)}
+.reqbody{padding:12px 16px;background:var(--panel-2);font-size:13px;color:var(--ink-2)}
+.reqbody pre{margin:6px 0 0}
+
+/* ============================ Сетка ============================ */
+.grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:20px;align-items:start;margin-bottom:28px}
+@media (max-width:1000px){ .grid{grid-template-columns:1fr} }
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+.card h2{
+  margin:0;padding:12px 16px;font-size:12px;font-weight:700;letter-spacing:.6px;
+  text-transform:uppercase;color:var(--ink-3);border-bottom:1px solid var(--line)
+}
+.sticky{position:sticky;top:14px}
+
+/* ============================ Стек слоёв (луковица) ============================ */
+.stack{padding:14px;overflow-x:auto}
+.layer{
+  border:1px solid var(--line);border-radius:9px;padding:7px 8px 8px;margin-top:6px;
+  background:var(--panel-2);transition:.14s;position:relative
+}
+.layer:first-child{margin-top:0}
+.layer > .lname{
+  display:flex;align-items:center;gap:8px;font:12.5px/1.3 ui-monospace,monospace;color:var(--ink-2)
+}
+.layer > .lname .dot{width:7px;height:7px;border-radius:50%;background:var(--line-2);flex:none}
+.layer > .lname .arrow{margin-left:auto;font-size:11px;color:var(--ink-3);opacity:0;transition:.14s}
+.layer.done{border-color:var(--line-2)}
+.layer.done > .lname{color:var(--ink-2)}
+.layer.done > .lname .dot{background:var(--ok)}
+.layer.active{
+  border-color:var(--accent);background:var(--accent-soft);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent)
+}
+.layer.active > .lname{color:var(--ink);font-weight:700}
+.layer.active > .lname .dot{background:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
+.layer.active > .lname .arrow{opacity:1}
+.layer .kids{margin-top:7px}
+.layer.clickable{cursor:pointer}
+.layer.clickable:hover{border-color:var(--accent)}
+
+.legend{display:flex;gap:14px;flex-wrap:wrap;padding:0 16px 14px;font-size:11.5px;color:var(--ink-3)}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{width:8px;height:8px;border-radius:50%;display:inline-block;font-style:normal}
+
+/* ============================ Панель состояния ============================ */
+.state{padding:8px 14px 14px}
+.state ul{list-style:none;margin:0;padding:0}
+.state li{
+  display:flex;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--line);
+  font-size:12.5px;animation:pop .25s ease
+}
+.state li:last-child{border-bottom:0}
+.state .k{font:12px/1.5 ui-monospace,monospace;color:var(--ink);flex:0 0 auto}
+.state .v{color:var(--ink-2);font-size:12px;margin-left:auto;text-align:right}
+.state .empty{color:var(--ink-3);font-size:12.5px;padding:8px 0}
+@keyframes pop{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+.state li.fresh .k::before{content:"+";color:var(--ok);font-weight:700;margin-right:5px}
+
+/* ============================ Панель шага ============================ */
+.step{padding:16px 18px 20px}
+.stephead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+.dirbadge{font:700 11px/1 ui-monospace,monospace;padding:5px 9px;border-radius:6px;white-space:nowrap}
+.dirbadge.in{background:var(--accent-soft);color:var(--accent)}
+.dirbadge.out{background:var(--warn-soft);color:var(--warn)}
+.dirbadge.core{background:var(--ok-soft);color:var(--ok)}
+.dirbadge.errb{background:var(--err-soft);color:var(--err)}
+.stepno{font:12px/1 ui-monospace,monospace;color:var(--ink-3)}
+.step h3{margin:8px 0 6px;font-size:19px;letter-spacing:-.2px;line-height:1.35}
+.loc{
+  display:inline-block;font:12px/1.4 ui-monospace,monospace;color:var(--ink-2);
+  background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:4px 8px;margin-bottom:12px
+}
+.step p{margin:10px 0}
+.step ul{margin:10px 0;padding-left:20px}
+.step li{margin:5px 0}
+.step b{color:var(--ink)}
+.step code{
+  background:var(--code-bg);border:1px solid var(--line);border-radius:5px;
+  padding:1px 5px;font-size:12.5px;color:var(--code-ink);word-break:break-word
+}
+.callout{
+  border-left:3px solid var(--accent);background:var(--accent-soft);
+  border-radius:0 8px 8px 0;padding:11px 14px;margin:14px 0;font-size:14px
+}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.callout.errc{border-left-color:var(--err);background:var(--err-soft)}
+.callout .t{display:block;font-weight:700;font-size:12px;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;color:var(--ink-2)}
+
+pre{
+  background:var(--code-bg);border:1px solid var(--line);border-radius:9px;
+  padding:13px 15px;overflow-x:auto;margin:14px 0;font-size:12.5px;line-height:1.65;color:var(--code-ink)
+}
+pre .c{color:var(--com);font-style:italic}
+pre .s{color:var(--str)}
+pre .k{color:var(--kw);font-weight:600}
+pre .n{color:var(--num)}
+pre .f{color:var(--fn)}
+pre .ph{color:var(--num);font-weight:700}
+.codelabel{
+  font:11px/1 ui-monospace,monospace;color:var(--ink-3);text-transform:uppercase;
+  letter-spacing:.6px;margin:16px 0 -6px
+}
+
+table.mini{border-collapse:collapse;width:100%;margin:14px 0;font-size:13px}
+table.mini th,table.mini td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+table.mini th{background:var(--panel-2);font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-3)}
+table.mini code{font-size:12px}
+
+/* ============================ Управление ============================ */
+.controls{
+  position:fixed;left:0;right:0;bottom:0;z-index:20;
+  background:color-mix(in srgb, var(--panel) 92%, transparent);
+  backdrop-filter:blur(10px);border-top:1px solid var(--line)
+}
+.progress{height:3px;background:var(--line)}
+.progress > i{display:block;height:100%;background:var(--accent);width:0;transition:width .2s}
+.cbar{display:flex;align-items:center;gap:12px;padding:11px 0 13px;flex-wrap:wrap}
+.btn{
+  border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink);
+  border-radius:9px;padding:9px 15px;font-size:13.5px;cursor:pointer;display:flex;align-items:center;gap:7px
+}
+.btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{opacity:.9;color:#fff}
+.counter{font:13px/1 ui-monospace,monospace;color:var(--ink-2);min-width:64px;text-align:center}
+.dots{display:flex;gap:3px;flex:1 1 200px;flex-wrap:wrap;min-width:0}
+.dots button{
+  width:11px;height:11px;padding:0;border-radius:50%;border:1px solid var(--line-2);
+  background:var(--panel-2);cursor:pointer;flex:none
+}
+.dots button.seen{background:var(--line-2)}
+.dots button.cur{background:var(--accent);border-color:var(--accent);transform:scale(1.35)}
+.dots button:hover{border-color:var(--accent)}
+.hint{font-size:11.5px;color:var(--ink-3);white-space:nowrap}
+@media (max-width:700px){ .hint{display:none} .dots{order:3;flex-basis:100%} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="head-top">
+      <div>
+        <h1>Путь запроса сквозь сервис</h1>
+        <p class="sub">
+          Пошаговый разбор для проекта
+          <a href="https://github.com/vitikevich-landau/clients-api">clients-api</a>:
+          что происходит с запросом от TCP-соединения до записи в лог — какие структуры создаются,
+          какие методы вызываются и в каком файле их искать.
+        </p>
+      </div>
+      <div class="spacer"></div>
+      <button class="tbtn" id="theme">Тема: авто</button>
+    </div>
+    <div class="tabs" role="tablist" id="tabs"></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="reqcard" id="reqcard"></div>
+
+  <div class="grid">
+    <section class="left">
+      <div class="card sticky">
+        <h2>Слои — «луковица»</h2>
+        <div class="stack" id="stack"></div>
+        <div class="legend">
+          <span><i style="background:var(--accent)"></i> текущий слой</span>
+          <span><i style="background:var(--ok)"></i> уже пройден</span>
+          <span><i style="background:var(--line-2)"></i> впереди</span>
+        </div>
+        <h2 style="border-top:1px solid var(--line)">Живёт в памяти прямо сейчас</h2>
+        <div class="state" id="state"></div>
+      </div>
+    </section>
+
+    <section class="right">
+      <div class="card">
+        <h2>Что происходит</h2>
+        <div class="step" id="step"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="progress"><i id="bar"></i></div>
+  <div class="wrap">
+    <div class="cbar">
+      <button class="btn" id="prev">◀ Назад</button>
+      <button class="btn primary" id="next">Вперёд ▶</button>
+      <span class="counter" id="counter">1 / 1</span>
+      <div class="dots" id="dots"></div>
+      <button class="btn" id="play">▶ Авто</button>
+      <span class="hint">← → пробел &nbsp;·&nbsp; Home / End</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===========================================================================
+   Слои: единый словарь. Каждый сценарий перечисляет свой набор
+   в порядке вложенности — от внешнего к внутреннему.
+   =========================================================================== */
+const LAYERS = {
+  net:      'net/http · сервер',
+  gin:      'gin.Engine · роутер',
+  recovery: 'Recovery · middleware',
+  requestid:'RequestID · middleware',
+  logger:   'Logger · middleware',
+  timeout:  'Timeout · middleware',
+  auth:     'Auth · middleware',
+  role:     'RequireAdmin · middleware',
+  handler:  'handler · транспорт',
+  service:  'service · бизнес-логика',
+  repo:     'repository · SQL',
+  pgx:      'pgx + pgxpool · драйвер',
+  pg:       'PostgreSQL'
+};
+
+const FULL   = ['net','gin','recovery','requestid','logger','timeout','auth','handler','service','repo','pgx','pg'];
+const ADMIN  = ['net','gin','recovery','requestid','logger','timeout','auth','role','handler','service','repo','pgx','pg'];
+
+/* ===========================================================================
+   СЦЕНАРИЙ 1 — создание предложения правки, счастливый путь
+   =========================================================================== */
+const S1 = {
+  id:'create', num:1,
+  tab:'Создание предложения',
+  verb:'POST',
+  path:'/api/v1/clients/cccccccc-0000-4000-8000-000000000001/suggestions',
+  status:'201 Created', statusKind:'ok',
+  reqNote:'Заголовки: <code>Authorization: Bearer eyJhbGci…</code> · <code>Content-Type: application/json</code>',
+  reqBody:'{"phone":"+7 999 888-77-66","company":null}',
+  layers:FULL,
+  steps:[
+  {
+    layer:'net', dir:'in', title:'Соединение принято, собран *http.Request',
+    loc:'стандартная библиотека net/http · настройки в cmd/api/main.go:181',
+    body:`<p>Сервер принял TCP-соединение и <b>запустил под него отдельную горутину</b>. Прочитал стартовую строку, заголовки и тело — собрал <code>*http.Request</code>.</p>
+      <p>Дальше вызывается <code>Handler.ServeHTTP(w, r)</code>, где <code>Handler</code> — наш <code>*gin.Engine</code>.</p>
+      <div class="callout"><span class="t">почему это важно</span>
+      Горутина на каждое соединение означает, что <b>все сервисы обязаны быть потокобезопасными</b>. Пул, репозитории и хендлеры — общие для всех запросов, поэтому они не хранят состояния запроса.</div>
+      <p>Здесь же работают таймауты сервера: <code>ReadHeaderTimeout</code> защищает от Slowloris — атаки, когда тысячи соединений шлют заголовки по байту в минуту.</p>`,
+    code:`server := &http.Server{
+    Addr:              ":8080",
+    Handler:           router,          // *gin.Engine
+    ReadTimeout:       10 * time.Second,
+    WriteTimeout:      15 * time.Second,
+    IdleTimeout:       60 * time.Second,
+    ReadHeaderTimeout: 10 * time.Second,
+}`,
+    lang:'go',
+    add:[['*http.Request','заголовки + тело']]
+  },
+  {
+    layer:'gin', dir:'in', title:'gin берёт Context из sync.Pool',
+    loc:'gin.Engine.ServeHTTP (внутри библиотеки)',
+    body:`<p><code>gin.Context</code> <b>не создаётся заново</b> — он берётся из <code>sync.Pool</code>. Это переиспользование объектов ради снижения нагрузки на сборщик мусора.</p>
+      <div class="callout warn"><span class="t">на этом обжигаются</span>
+      Нельзя сохранять <code>*gin.Context</code> и использовать его <b>после</b> возврата из хендлера — он уже вернулся в пул и обслуживает чужой запрос. Для фоновой горутины берут <code>c.Copy()</code>.</div>`,
+    code:`func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+    c := engine.pool.Get().(*Context)   // из sync.Pool, не new()
+    c.writermem.reset(w)
+    c.Request = req
+    c.reset()
+
+    engine.handleHTTPRequest(c)
+
+    engine.pool.Put(c)                  // вернуть в пул
+}`,
+    lang:'go',
+    add:[['*gin.Context','из sync.Pool']]
+  },
+  {
+    layer:'gin', dir:'in', title:'Поиск маршрута в префиксном дереве',
+    loc:'internal/handler/router.go:195 — регистрация роута',
+    body:`<p>gin ищет путь в radix-дереве для метода POST. Сегмент <code>:id</code> — параметр, его значение попадает в <code>c.Params</code>.</p>
+      <p>Результат подготовки контекста:</p>
+      <table class="mini">
+        <tr><th>поле</th><th>значение</th></tr>
+        <tr><td><code>c.Params</code></td><td><code>[{Key:"id", Value:"cccccccc-…"}]</code></td></tr>
+        <tr><td><code>c.handlers</code></td><td>слайс из <b>6</b> функций</td></tr>
+        <tr><td><code>c.index</code></td><td><code>-1</code></td></tr>
+      </table>
+      <div class="callout"><span class="t">ключевая деталь</span>
+      Цепочку обработчиков gin собирает <b>при регистрации роута</b>, а не при запросе. Middleware группы и сам хендлер склеиваются в один плоский слайс. В логе старта это видно как <code>(6 handlers)</code>.</div>`,
+    code:`authorized := v1.Group("")
+authorized.Use(middleware.Auth(deps.Tokens))
+{
+    authorized.POST("/clients/:id/suggestions", deps.Suggestions.Create)
+}
+
+// В логе при старте:
+// POST /api/v1/clients/:id/suggestions --> SuggestionHandler.Create-fm (6 handlers)
+//   1 Recovery  2 RequestID  3 Logger  4 Timeout  5 Auth  6 Create`,
+    lang:'go',
+    add:[['c.Params','id = cccccccc-…'],['c.handlers','6 функций']]
+  },
+  {
+    layer:'gin', dir:'in', title:'c.Next() — весь механизм «луковицы»',
+    loc:'gin.Context.Next (внутри библиотеки)',
+    body:`<p>Вот весь механизм — четыре строки. Каждый middleware внутри себя <b>снова зовёт</b> <code>c.Next()</code>, поэтому получается <b>вложенность вызовов</b>, а не последовательность.</p>
+      <p>Стек вызовов на самом дне выглядит буквально так:</p>
+      <pre style="margin:8px 0">Recovery → Next → RequestID → Next → Logger → Next →
+Timeout → Next → Auth → Next → Create</pre>
+      <div class="callout warn"><span class="t">классическая ошибка</span>
+      <code>c.Abort()</code> <b>не делает</b> <code>return</code> из функции. Он лишь выставляет <code>c.index = 63</code>, из-за чего цикл завершается. Забыл <code>return</code> после <code>Abort()</code> — код ниже продолжит выполняться.</div>`,
+    code:`func (c *Context) Next() {
+    c.index++
+    for c.index < int8(len(c.handlers)) {
+        c.handlers[c.index](c)   // вызвали обработчик номер index
+        c.index++
+    }
+}`,
+    lang:'go'
+  },
+  {
+    layer:'recovery', dir:'in', title:'Recovery: ставит defer и проваливается глубже',
+    loc:'internal/middleware/recovery.go:33',
+    body:`<p>На пути внутрь не делает <b>ничего</b>. Объявляет отложенную функцию с <code>recover()</code> и сразу зовёт <code>c.Next()</code>.</p>
+      <p>Отложенная функция сработает только если ниже что-то запаникует — при разворачивании стека.</p>
+      <div class="callout"><span class="t">почему он самый внешний</span>
+      Без него любая паника — разыменование nil, выход за границы среза — кладёт <b>весь процесс</b>: не один запрос, а сервис целиком со всеми параллельными запросами. Стоять он должен снаружи всех остальных, чтобы поймать панику и в них тоже.</div>`,
+    code:`func Recovery(log *slog.Logger) gin.HandlerFunc {
+    return func(c *gin.Context) {
+        defer func() {              // объявлен ДО c.Next()
+            rec := recover()
+            if rec == nil { return }
+            // ... разбор и ответ 500
+        }()
+
+        c.Next()
+    }
+}`,
+    lang:'go'
+  },
+  {
+    layer:'requestid', dir:'in', title:'RequestID: сквозной идентификатор запроса',
+    loc:'internal/middleware/requestid.go:29',
+    body:`<p>Смотрим входящий заголовок. Если перед нами nginx/Envoy или запрос пришёл от другого нашего сервиса — идентификатор уже сгенерирован выше, и его надо <b>подхватить</b>, иначе сквозная трассировка порвётся.</p>
+      <p>Заголовок ответа ставится <b>до</b> <code>c.Next()</code>: после того как хендлер начнёт писать тело, заголовки уже уйдут по сети и менять их поздно.</p>
+      <div class="callout warn"><span class="t">зачем валидировать чужой заголовок</span>
+      Значение попадёт в логи. Перевод строки внутри него позволил бы <b>подделать лишние строки в журнале</b> (log injection), а мегабайтная строка раздула бы каждую запись. Поэтому пропускаем только буквы, цифры, <code>-</code>, <code>_</code>, <code>.</code> и не длиннее 128 символов.</div>`,
+    code:`requestID := c.GetHeader("X-Request-ID")
+if !isValidRequestID(requestID) {          // requestid.go:66
+    requestID = uuid.NewString()
+}
+
+c.Set("request_id", requestID)             // -> c.Keys map[string]any
+c.Writer.Header().Set("X-Request-ID", requestID)
+
+c.Next()`,
+    lang:'go',
+    add:[['request_id','92a71c99-1d35-…']]
+  },
+  {
+    layer:'logger', dir:'in', title:'Logger: собирает логгер с полями и кладёт его в context',
+    loc:'internal/middleware/logger.go:21',
+    body:`<p>Два действия, и оба принципиальные.</p>
+      <p><b>1.</b> <code>slog.Logger.With()</code> создаёт <b>новый</b> логгер с приклеенными полями. Дальше каждая запись через него автоматически несёт <code>request_id</code>, <code>method</code>, <code>path</code>. Это не глобальная переменная — отдельный объект, живущий ровно один запрос.</p>
+      <p><b>2.</b> <code>c.Request = c.Request.WithContext(ctx)</code> — связка двух миров.</p>
+      <div class="callout"><span class="t">gin.Context ≠ context.Context</span>
+      Слои <code>service</code> и <code>repository</code> про gin ничего не знают — они принимают стандартный <code>context.Context</code>. Единственный способ передать им логгер: положить его в контекст <code>*http.Request</code>. <code>WithContext</code> возвращает <b>копию запроса</b>, поэтому идёт присваивание обратно в <code>c.Request</code>.</div>
+      <p>Здесь же засекается время — <code>start := time.Now()</code>. Использовано оно будет на обратном пути.</p>`,
+    code:`start := time.Now()
+
+reqLogger := baseLogger.With(                       // НОВЫЙ *slog.Logger
+    slog.String("request_id", GetRequestID(c)),
+    slog.String("method", c.Request.Method),
+    slog.String("path", path),
+)
+
+ctx := logger.ToContext(c.Request.Context(), reqLogger)  // logger/ctx.go:26
+c.Request = c.Request.WithContext(ctx)                   // ПОДМЕНА КОНТЕКСТА
+
+c.Next()`,
+    lang:'go',
+    add:[['reqLogger','*slog.Logger + поля'],['ctx₁','WithValue(logger)'],['start','time.Now()']]
+  },
+  {
+    layer:'timeout', dir:'in', title:'Timeout: контекст обёрнут ещё раз',
+    loc:'internal/middleware/timeout.go:48',
+    body:`<p>Порядок регистрации middleware определил порядок вложенности контекстов:</p>
+      <pre style="margin:8px 0">ctx₀  контекст запроса от net/http   ← отменяется, если клиент отвалился
+ └─ ctx₁ = WithValue(ctx₀, logger)   ← положил Logger
+     └─ ctx₂ = WithTimeout(ctx₁, 10s) ← положил Timeout</pre>
+      <p><code>ctx₂</code> несёт <b>логгер, дедлайн и сигнал разрыва соединения одновременно</b>. Именно он доедет до pgx и до самого Postgres.</p>
+      <div class="callout"><span class="t">что даёт дедлайн на практике</span>
+      Один зависший запрос держит соединение из пула. Десять зависших при <code>MaxConns=10</code> исчерпают пул целиком — и ляжет весь сервис, включая ручки, которые работают за миллисекунды. Таймаут превращает «полный отказ» в «медленно, но живём».</div>
+      <p><code>defer cancel()</code> обязателен даже при успехе: иначе контекст и его таймер останутся в памяти до истечения срока.</p>`,
+    code:`ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+defer cancel()
+
+c.Request = c.Request.WithContext(ctx)
+
+c.Next()`,
+    lang:'go',
+    add:[['ctx₂','WithTimeout 10s']]
+  },
+  {
+    layer:'auth', dir:'in', title:'Auth: разбор заголовка Authorization',
+    loc:'internal/middleware/auth.go:42',
+    body:`<p>Ожидаемый формат — <code>Authorization: Bearer &lt;token&gt;</code>. Регистр схемы по RFC 7235 не важен, поэтому сравнение через <code>EqualFold</code>: некоторые клиенты шлют <code>bearer</code> с маленькой буквы.</p>
+      <p>При любой проблеме — нет заголовка, кривая схема, пустой токен — отвечаем <b>401</b> и обрываем цепочку.</p>
+      <div class="callout"><span class="t">аутентификация ≠ авторизация</span>
+      Этот middleware отвечает на вопрос <b>«КТО ты»</b>. На вопрос <b>«МОЖНО ли тебе сюда»</b> отвечает <code>RequireRole</code>. Два разных вопроса и два разных middleware — их постоянно путают.</div>`,
+    code:`header := c.GetHeader("Authorization")
+if header == "" {
+    response.Error(c, apperr.Unauthorized("authorization header is required"))
+    return          // ОБЯЗАТЕЛЕН: Abort не прерывает эту функцию
+}
+
+rawToken := strings.TrimSpace(header[len("Bearer "):])`,
+    lang:'go'
+  },
+  {
+    layer:'auth', dir:'in', title:'TokenManager.Parse — проверка подписи',
+    loc:'internal/service/token.go:117',
+    body:`<p>Токен — это три части через точку: <code>header.payload.signature</code>. Первые две — обычный base64 от JSON, <b>их может прочитать кто угодно</b>. JWT не шифрует данные, он их только <b>подписывает</b>.</p>
+      <p><b>Похода в базу здесь нет</b> — все данные пришли из подписанного токена. В этом и смысл JWT.</p>
+      <div class="callout warn"><span class="t">WithValidMethods — самая важная строка</span>
+      Без неё библиотека доверяет полю <code>alg</code> <b>из заголовка токена</b>, то есть данным атакующего. Это открывает две классические атаки:<br><br>
+      <b>1.</b> <code>alg=none</code> — «токен без подписи». Библиотека, которая верит заголовку, пропускает его как валидный, и подделать роль admin становится тривиально.<br><br>
+      <b>2.</b> Подмена RS256 → HS256. Атакующий берёт <b>публичный</b> ключ (он общедоступен), подписывает им токен как HMAC и меняет <code>alg</code>. Сервер честно проверяет HMAC тем же публичным ключом — сходится.</div>`,
+    code:`token, err := jwt.ParseWithClaims(
+    tokenString, claims,
+    func(t *jwt.Token) (any, error) { return m.secret, nil },
+
+    jwt.WithValidMethods([]string{"HS256"}),  // закрывает обе атаки
+    jwt.WithIssuer(m.issuer),
+    jwt.WithExpirationRequired(),             // вечных токенов не бывает
+)
+
+userID, err := uuid.Parse(claims.Subject)
+if !claims.Role.Valid() { ... }
+
+return &model.AuthUser{ID: userID, Email: claims.Email, Role: claims.Role}, nil`,
+    lang:'go',
+    add:[['model.AuthUser','id + email + role']]
+  },
+  {
+    layer:'auth', dir:'in', title:'Пользователь положен в контекст gin',
+    loc:'internal/middleware/auth.go:88 · чтение — middleware/context.go:101',
+    body:`<p>Кладём <b>значение</b>, а не указатель — структура маленькая, копирование дешевле возни с общей памятью.</p>
+      <div class="callout warn"><span class="t">чего здесь намеренно нет</span>
+      <b>Сам токен в контекст не кладётся.</b> Иначе он рано или поздно попадёт в лог при отладке — а токен это фактически пароль, действующий до конца срока.</div>
+      <p>Достают его хендлеры через <code>MustGetAuthUser</code>. Функция <b>паникует</b>, если пользователя нет — и это правильно: дойти сюда без него можно единственным способом, зарегистрировав роут в группе без <code>middleware.Auth</code>. Это ошибка программиста, а не пользователя, и она должна быть громкой. Панику поймает Recovery.</p>`,
+    code:`c.Set("auth_user", *user)     // -> c.Keys
+c.Next()
+
+// ---- чтение в хендлере ----
+func MustGetAuthUser(c *gin.Context) model.AuthUser {
+    user, ok := GetAuthUser(c)
+    if !ok {
+        panic("middleware: auth user is missing in context — " +
+              "the route is probably registered without middleware.Auth")
+    }
+    return user
+}`,
+    lang:'go'
+  },
+  {
+    layer:'handler', dir:'core', title:'Хендлер: разбираем идентификатор из пути',
+    loc:'internal/handler/suggestion.go:55 → binding.go:152',
+    body:`<p>Мы на дне луковицы. У хендлера ровно три обязанности: разобрать вход, позвать сервис, превратить результат в HTTP-ответ.</p>
+      <p><code>c.Param("id")</code> берёт значение из <code>c.Params</code>, дальше <code>uuid.Parse</code>.</p>
+      <div class="callout"><span class="t">зачем отдельная функция</span>
+      Если строка не UUID — отвечаем <b>400</b>, а не 500. Виноват клиент, а не сервер. Без этой обёртки ошибка <code>uuid.Parse</code> провалилась бы дальше и превратилась во внутреннюю ошибку сервера.</div>`,
+    code:`func (h *SuggestionHandler) Create(c *gin.Context) {
+    clientID, ok := parseUUIDParam(c, "id")
+    if !ok {
+        return          // ответ 400 уже отправлен внутри
+    }
+    ...
+
+// ---- binding.go:152 ----
+id, err := uuid.Parse(c.Param(name))
+if err != nil {
+    response.ValidationError(c, "invalid identifier", map[string]string{
+        name: "must be a valid UUID",
+    })
+    return uuid.Nil, false
+}`,
+    lang:'go',
+    add:[['clientID','uuid.UUID [16]byte']]
+  },
+  {
+    layer:'handler', dir:'core', title:'Разбор тела: три состояния поля вместо двух',
+    loc:'internal/handler/binding.go:81 → model/optional.go:60',
+    body:`<p>Вот здесь работает механика, ради которой всё затевалось. <code>json.Unmarshal</code> идёт по ключам присланного JSON:</p>
+      <table class="mini">
+        <tr><th>ключ в JSON</th><th>что делает encoding/json</th><th>результат</th></tr>
+        <tr><td><code>"phone"</code> есть</td><td>вызывает <code>UnmarshalJSON("+7 999…")</code></td><td><code>{Present:true, Value:&amp;"+7 999…"}</code></td></tr>
+        <tr><td><code>"company": null</code></td><td>вызывает <code>UnmarshalJSON("null")</code></td><td><code>{Present:true, Value:nil}</code></td></tr>
+        <tr><td><code>"email"</code> <b>нет</b></td><td><b>метод не вызывается вообще</b></td><td><code>{Present:false, Value:nil}</code></td></tr>
+      </table>
+      <div class="callout"><span class="t">весь фокус в одной строке</span>
+      <code>encoding/json</code> вызывает <code>UnmarshalJSON</code> <b>только для ключей, которые реально присутствуют</b> в документе. Поэтому сам факт вызова = «ключ был», и метод первой же строкой ставит <code>o.Present = true</code>.<br><br>
+      Обычный <code>*string</code> этого не может: и «не передали», и «передали null» дают одинаковый <code>nil</code>. Ровно такая семантика описана стандартом <b>JSON Merge Patch (RFC 7396)</b>.</div>`,
+    code:`func (o *Optional[T]) UnmarshalJSON(data []byte) error {
+    o.Present = true          // сам факт вызова = ключ был в JSON
+
+    if bytes.Equal(bytes.TrimSpace(data), []byte("null")) {
+        o.Value = nil         // явный null -> очистить поле
+        return nil
+    }
+
+    var v T
+    if err := json.Unmarshal(data, &v); err != nil {
+        return err
+    }
+    o.Value = &v              // есть значение -> заменить
+    return nil
+}`,
+    lang:'go',
+    add:[['SuggestionPayload','phone=set, company=null']]
+  },
+  {
+    layer:'handler', dir:'core', title:'Вызов сервиса через интерфейс',
+    loc:'internal/handler/suggestion.go:66 · интерфейс — handler/interfaces.go:33',
+    body:`<p>Хендлер зовёт сервис <b>через интерфейс</b>, а не через конкретный тип. Он не знает, что за ним настоящий сервис, а не заглушка из теста.</p>
+      <div class="callout warn"><span class="t">c.Request.Context(), а не context.Background()</span>
+      Передашь <code>Background</code> — потеряешь разом:<br>
+      • <b>логгер</b> — <code>request_id</code> пропадёт из всех записей ниже;<br>
+      • <b>дедлайн</b> — таймаут перестанет работать;<br>
+      • <b>отмену</b> — сервис продолжит молотить запрос, от которого клиент уже ушёл.</div>`,
+    code:`author := middleware.MustGetAuthUser(c)
+
+suggestion, err := h.suggestions.Create(
+    c.Request.Context(),      // ctx₂: логгер + дедлайн + отмена
+    clientID, author, payload,
+)
+if err != nil {
+    response.Error(c, err)
+    return
+}`,
+    lang:'go'
+  },
+  {
+    layer:'service', dir:'core', title:'Сервис: бизнес-правила',
+    loc:'internal/service/suggestion_service.go:40',
+    body:`<p>Логгер достаётся из контекста — вместе со всеми полями, которые вшил middleware.</p>
+      <p>Дальше проверки, которые <b>нельзя выразить тегами</b> <code>binding</code>: валидатор не умеет заглядывать внутрь дженерика <code>Optional[T]</code>, для него это просто структура с полями <code>Present</code> и <code>Value</code>.</p>
+      <p>Правила из <code>Validate()</code>: <code>full_name</code> нельзя обнулить (колонка NOT NULL), <code>status</code> только из известного списка, email должен быть похож на адрес.</p>
+      <div class="callout"><span class="t">это не костыль</span>
+      Нормальное разделение: теги хорошо описывают <b>формат</b> («это email», «длина до 200»), а бизнес-правила («это поле нельзя очистить, потому что колонка NOT NULL») всё равно живут в коде.</div>`,
+    code:`log := logger.FromContext(ctx)          // логгер с request_id
+
+if payload.IsEmpty() {                                    // model:99
+    return nil, apperr.Validation("payload must contain at least one field to change")
+}
+
+if fieldErrors := payload.Validate(); len(fieldErrors) > 0 {   // model:153
+    return nil, apperr.Validation("payload validation failed").
+                       WithDetails(fieldErrors)
+}`,
+    lang:'go'
+  },
+  {
+    layer:'service', dir:'core', title:'Первый поход в базу и сборка доменной модели',
+    loc:'internal/service/suggestion_service.go:78 · db/tx.go:62',
+    body:`<p><code>s.tx.DB()</code> возвращает <b>пул</b> как <code>db.Querier</code>. Транзакция здесь не нужна: это одиночные запросы, каждый и так атомарен. Оборачивать одиночный SELECT в BEGIN/COMMIT — два лишних обращения к базе впустую.</p>
+      <p><b>UUID генерируем сами</b>, до вставки. Идентификатор известен заранее — его можно писать в логи и передавать дальше, не дожидаясь ответа Postgres.</p>
+      <div class="callout"><span class="t">проверка Exists — не защита от гонки</span>
+      Между проверкой и вставкой клиента могут удалить. От этого защищает внешний ключ в базе. Смысл проверки в другом: отдать понятную ошибку 404 в подавляющем большинстве случаев.</div>`,
+    code:`exists, err := s.clients.Exists(ctx, s.tx.DB(), clientID)
+if !exists {
+    return nil, apperr.NotFound("client")
+}
+
+suggestion := &model.Suggestion{
+    ID:       uuid.New(),                       // ID известен ДО вставки
+    ClientID: clientID,
+    AuthorID: author.ID,
+    Payload:  payload,
+    Status:   model.SuggestionStatusPending,
+}`,
+    lang:'go',
+    add:[['model.Suggestion','id + payload + pending']]
+  },
+  {
+    layer:'repo', dir:'core', title:'Репозиторий: INSERT … RETURNING',
+    loc:'internal/repository/suggestion_repo.go:71',
+    body:`<p>Слой знает SQL и больше ничего. Ни бизнес-правил, ни проверок прав, ни понятия о HTTP.</p>
+      <p><code>created_at</code> в списке колонок нет — за него отвечает <code>DEFAULT now()</code> в схеме. Единый источник времени — часы сервера базы, а не часы каждого инстанса приложения (они разъезжаются на секунды — обычное дело).</p>
+      <p><code>RETURNING</code> отдаёт проставленное базой значение обратно <b>без второго запроса</b> — приятная особенность Postgres.</p>`,
+    code:`INSERT INTO client_suggestions (id, client_id, author_id, payload, status)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING created_at`,
+    lang:'sql'
+  },
+  {
+    layer:'pgx', dir:'core', title:'pgx: соединение, кодирование, наш MarshalJSON',
+    loc:'internal/db/postgres.go:39 — настройки пула',
+    body:`<p>Что происходит под капотом одного <code>QueryRow</code>:</p>
+      <ul>
+        <li><code>Acquire(ctx)</code> — взять свободное соединение из пула или <b>ждать</b>, если все заняты. Дедлайн из <code>ctx₂</code> работает уже здесь.</li>
+        <li>расширенный протокол: Parse → Bind → Describe → Execute;</li>
+        <li>кодирование параметров: <code>$1</code> uuid → 16 байт бинарно, <code>$4</code> jsonb → <b>вызывается наш MarshalJSON</b>;</li>
+        <li><code>Release()</code> — соединение сразу возвращается в пул.</li>
+      </ul>
+      <div class="callout"><span class="t">вот зачем был нужен кастомный MarshalJSON</span>
+      Стандартная сериализация выдала бы <b>все шесть</b> ключей, и разница между «не трогать» и «очистить» потерялась бы прямо при записи в базу. Одобрение такого предложения стёрло бы клиенту email, имя и заметки.</div>`,
+    code:`func (p SuggestionPayload) MarshalJSON() ([]byte, error) {
+    m := make(map[string]any, 6)
+
+    if p.Phone.Present   { m["phone"]   = p.Phone.Value   }  // есть
+    if p.Company.Present { m["company"] = p.Company.Value }  // есть, nil -> null
+    if p.Email.Present   { m["email"]   = p.Email.Value   }  // НЕТ -> ключ не попадёт
+    // ...
+
+    return json.Marshal(m)
+}
+
+// Уехало в колонку jsonb (OID 3802):
+// {"company":null,"phone":"+7 999 888-77-66"}`,
+    lang:'go',
+    add:[['соединение','взято из пула']]
+  },
+  {
+    layer:'pg', dir:'core', title:'PostgreSQL: вставка и проверка ограничений',
+    loc:'migrations/00003_client_suggestions.sql',
+    body:`<p>База проверяет всё, что описано в схеме: внешние ключи на <code>clients</code> и <code>users</code>, <code>CHECK</code> на допустимые статусы, и главное — <b>частичный уникальный индекс</b>.</p>
+      <p>Он разрешает автору держать только <b>одно нерассмотренное</b> предложение по клиенту. Рассмотренных может быть сколько угодно — условие <code>WHERE status = 'pending'</code> делает ограничение частичным.</p>
+      <div class="callout"><span class="t">почему инварианты в базе, а не только в коде</span>
+      Код можно обойти — миграцией, ручным UPDATE, багом в новой версии. Базу — нет. Такие правила лучше держать в обоих местах: в коде ради понятной ошибки, в базе ради гарантии.</div>`,
+    code:`CREATE UNIQUE INDEX ux_suggestions_one_pending_per_author_client
+    ON client_suggestions (client_id, author_id)
+    WHERE status = 'pending';
+
+CONSTRAINT chk_reviewed_consistency CHECK (
+    (status =  'pending' AND reviewed_at IS NULL)
+    OR
+    (status <> 'pending' AND reviewed_at IS NOT NULL)
+)`,
+    lang:'sql',
+    drop:['соединение'],
+    add:[['created_at','пришло из RETURNING']]
+  },
+  {
+    layer:'repo', dir:'out', title:'Второй запрос: JOIN вместо проблемы N+1',
+    loc:'internal/repository/suggestion_repo.go:100',
+    body:`<p>Сервис перечитывает предложение вместе со связанными данными — клиенту API нужно видеть, <b>кто</b> предложил и <b>по какому клиенту</b>.</p>
+      <div class="callout"><span class="t">почему JOIN, а не отдельные запросы</span>
+      Тянуть автора и клиента отдельными запросами на каждую строку списка — это <b>N+1</b>: одна выборка списка + N выборок автора + N выборок клиента. Двадцать предложений превращаются в <b>сорок один</b> запрос к базе. JOIN делает это одним.</div>
+      <p><code>LEFT JOIN</code> для рецензента обязателен: у нерассмотренных предложений его нет, и обычный <code>JOIN</code> выкинул бы такие строки из результата — очередь модерации всегда была бы пустой.</p>
+      <p><code>pgxscan.Get</code> раскладывает строку по полям структуры, сверяясь с тегами <code>db:"…"</code>. Псевдоним <code>AS author_email</code> обязан совпасть с тегом.</p>`,
+    code:`SELECT s.id, s.client_id, s.author_id, s.payload, s.status,
+       s.reviewer_id, s.review_comment, s.created_at, s.reviewed_at,
+       author.email   AS author_email,
+       c.full_name    AS client_name,
+       reviewer.email AS reviewer_email
+FROM client_suggestions s
+JOIN users   author   ON author.id = s.author_id
+JOIN clients c        ON c.id      = s.client_id
+LEFT JOIN users reviewer ON reviewer.id = s.reviewer_id
+WHERE s.id = $1`,
+    lang:'sql',
+    add:[['model.SuggestionDetailed','+ author_email, client_name']]
+  },
+  {
+    layer:'handler', dir:'out', title:'Домен → DTO ответа',
+    loc:'internal/model/suggestion.go:425',
+    body:`<p>Доменная модель превращается в <b>отдельную структуру для внешнего мира</b>. Здесь же вызывается <code>ChangedFields()</code>, чтобы фронтенду не пришлось разбирать payload ради надписи «предложено изменить: телефон, компания».</p>
+      <div class="callout"><span class="t">зачем отдельный тип, а не теги json на доменной модели</span>
+      Соблазн велик — навесить и <code>db:"…"</code>, и <code>json:"…"</code> на одну структуру. Но тогда одна забытая строчка<br>
+      <code>PasswordHash string \`db:"password_hash" json:"password_hash"\`</code><br>
+      отправляет хеш пароля клиенту. В <code>UserResponse</code> такого поля <b>просто нет</b> — утечка физически невозможна.</div>`,
+    code:`func NewSuggestionDetailedResponse(s *SuggestionDetailed) SuggestionResponse {
+    resp := NewSuggestionResponse(&s.Suggestion)
+    resp.AuthorEmail   = s.AuthorEmail
+    resp.ClientName    = s.ClientName
+    resp.ReviewerEmail = s.ReviewerEmail
+    return resp
+}
+
+// внутри NewSuggestionResponse:
+//   ChangedFields: s.Payload.ChangedFields(),   // ["company", "phone"]`,
+    lang:'go',
+    add:[['model.SuggestionResponse','DTO наружу']]
+  },
+  {
+    layer:'handler', dir:'out', title:'Запись ответа в сокет',
+    loc:'internal/response/response.go:95',
+    body:`<p><code>c.Writer</code> — это <code>gin.responseWriter</code>, обёртка над <code>http.ResponseWriter</code>, которая <b>запоминает статус и число записанных байт</b>. Отсюда логгер потом возьмёт <code>c.Writer.Status()</code> и <code>c.Writer.Size()</code>.</p>
+      <p><b>201</b>, а не 200: код сообщает клиенту, что ресурс <b>создан</b>. Это часть контракта HTTP, и клиентские библиотеки на него полагаются.</p>
+      <p>Здесь <code>MarshalJSON</code> вызывается второй раз — теперь для ответа. Поэтому в JSON снова только два поля payload.</p>`,
+    code:`response.Created(c, model.NewSuggestionDetailedResponse(suggestion))
+    -> c.JSON(201, payload)
+        -> c.Render(201, render.JSON{Data: payload})
+            -> Content-Type: application/json; charset=utf-8
+            -> c.Writer.WriteHeaderNow()      // ЗАГОЛОВКИ УШЛИ ПО СЕТИ
+            -> json.Marshal(payload)
+            -> c.Writer.Write(bytes)`,
+    lang:'text'
+  },
+  {
+    layer:'timeout', dir:'out', title:'Timeout на пути наружу',
+    loc:'internal/middleware/timeout.go:60',
+    body:`<p>Управление вернулось из <code>c.Next()</code>. Проверяем, уложились ли в дедлайн.</p>
+      <p>Уложились — просто выходим, сработает <code>defer cancel()</code> и таймер освободится.</p>
+      <div class="callout warn"><span class="t">честное ограничение</span>
+      Хендлер <b>не прерывается силой</b> — в Go нельзя убить горутину извне. Дедлайн действует на всё, что уважает контекст: обращения к БД, HTTP-запросы наружу, <code>select</code> с <code>ctx.Done()</code>. Хендлер, крутящий долгий цикл без обращений к базе, доработает до конца.</div>`,
+    code:`c.Next()
+
+if !errors.Is(ctx.Err(), context.DeadlineExceeded) {
+    return                      // уложились
+}
+
+logger.FromContext(ctx).Warn("request timed out", ...)
+
+if c.Writer.Written() {
+    return                      // заголовки уже ушли, статус не поменять
+}
+response.Error(c, apperr.Timeout("request processing timed out"))`,
+    lang:'go',
+    drop:['ctx₂']
+  },
+  {
+    layer:'logger', dir:'out', title:'Logger: та самая запись в лог',
+    loc:'internal/middleware/logger.go:56',
+    body:`<p>Вот ради чего Logger стоял снаружи Timeout. Статус и длительность известны только сейчас.</p>
+      <p>Уровень выбирается <b>по коду ответа</b>:</p>
+      <table class="mini">
+        <tr><th>статус</th><th>уровень</th><th>смысл</th></tr>
+        <tr><td>5xx</td><td>ERROR</td><td>наша вина, надо чинить</td></tr>
+        <tr><td>4xx</td><td>WARN</td><td>вина клиента: кривой токен, нет объекта</td></tr>
+        <tr><td>2xx / 3xx</td><td>INFO</td><td>норма</td></tr>
+      </table>
+      <div class="callout warn"><span class="t">самая частая болезнь логирования</span>
+      Писать ERROR там, где ошибки нет. Юзер запросил несуществующий id — это штатный 404, а не авария. Если ERROR-ов сотни в час, на них перестают смотреть, и настоящий сбой тонет в шуме.</div>
+      <p><b>Что не попадает в лог никогда:</b> пароли, токены, тела запросов, персональные данные. Логируем идентификаторы, а не содержимое.</p>`,
+    code:`{"time":"2026-08-16T10:45:42Z","level":"INFO","msg":"request handled",
+ "request_id":"92a71c99-1d35-4090-955d-bbc1e6f33a5a",
+ "method":"POST",
+ "path":"/api/v1/clients/cccccccc-.../suggestions",
+ "status":201,
+ "duration_ms":12,
+ "response_size":487,
+ "client_ip":"172.18.0.1"}`,
+    lang:'json',
+    drop:['start','reqLogger','ctx₁']
+  },
+  {
+    layer:'recovery', dir:'out', title:'Recovery: паники не было',
+    loc:'internal/middleware/recovery.go:36',
+    body:`<p><code>RequestID</code> на пути наружу не делает ничего. У <code>Recovery</code> срабатывает отложенная функция: <code>recover()</code> возвращает <code>nil</code>, значит паники не было — выходим.</p>
+      <p>Если бы паника случилась, здесь бы отработала вся ветка: распознавание обрыва соединения клиентом (это <b>не</b> ошибка сервиса), запись стектрейса в лог и обезличенный ответ 500 — без текста паники, потому что это прямая подсказка атакующему о внутреннем устройстве.</p>`,
+    code:`defer func() {
+    rec := recover()
+    if rec == nil { return }        // ← мы здесь
+
+    if isBrokenPipe(rec) {          // клиент закрыл вкладку — не наша вина
+        log.Warn("client closed connection", ...)
+        c.Abort()
+        return
+    }
+
+    log.Error("panic recovered", ..., slog.String("stack", string(debug.Stack())))
+
+    if c.Writer.Written() { c.Abort(); return }
+    response.Error(c, apperr.Internal(panicToError(rec)))
+}()`,
+    lang:'go'
+  },
+  {
+    layer:'gin', dir:'out', title:'Context возвращается в пул, соединение живёт дальше',
+    loc:'gin.Engine.ServeHTTP · cmd/api/main.go:181',
+    body:`<p>gin вызывает <code>c.reset()</code> и кладёт контекст обратно в <code>sync.Pool</code>. <code>net/http</code> дописывает ответ в сокет и <b>оставляет соединение живым</b> (keep-alive) до истечения <code>IdleTimeout</code> — следующий запрос от того же клиента не будет заново открывать TCP.</p>
+      <h4 style="margin:18px 0 6px;font-size:14px">Время жизни объектов</h4>
+      <table class="mini">
+        <tr><th>живёт</th><th>объекты</th></tr>
+        <tr><td><b>весь процесс</b></td><td>пул соединений, репозитории, сервисы, хендлеры, <code>gin.Engine</code>, <code>TokenManager</code></td></tr>
+        <tr><td><b>один запрос</b></td><td><code>gin.Context</code>, <code>*http.Request</code>, цепочка <code>ctx</code>, <code>reqLogger</code>, <code>AuthUser</code>, <code>SuggestionPayload</code>, <code>Suggestion</code>, DTO ответа</td></tr>
+        <tr><td><b>один запрос к БД</b></td><td>соединение из пула — взято и сразу возвращено</td></tr>
+      </table>
+      <div class="callout"><span class="t">итог</span>
+      Данные сменили форму ровно три раза: <b>JSON → DTO запроса → доменная модель → DTO ответа → JSON</b>. Каждая граница — место, где что-то валидируется или отсекается. Без них хеш пароля рано или поздно уезжает клиенту.</div>`,
+    code:`engine.pool.Put(c)      // Context — обратно в пул для следующего запроса`,
+    lang:'go',
+    drop:['*gin.Context','*http.Request','c.Params','c.handlers','request_id','model.AuthUser','clientID','SuggestionPayload','model.Suggestion','model.SuggestionDetailed','model.SuggestionResponse','created_at']
+  }
+]};
+
+/* ===========================================================================
+   СЦЕНАРИЙ 2 — одобрение правки: транзакция и блокировки
+   =========================================================================== */
+const S2 = {
+  id:'approve', num:2,
+  tab:'Одобрение правки (транзакция)',
+  verb:'POST',
+  path:'/api/v1/admin/suggestions/a62d0536-…/approve',
+  status:'200 OK', statusKind:'ok',
+  reqNote:'Токен с ролью <code>admin</code>. Тело необязательно.',
+  reqBody:'{"comment":"verified by phone"}',
+  layers:ADMIN,
+  steps:[
+  {
+    layer:'gin', dir:'in', title:'Семь обработчиков вместо шести',
+    loc:'internal/handler/router.go:218',
+    body:`<p>Админская группа отличается от пользовательской ровно одним: в цепочке появляется <b>восьмой</b>… точнее седьмой обработчик — <code>RequireAdmin</code>.</p>
+      <p>Первые пять слоёв (Recovery → RequestID → Logger → Timeout → Auth) работают <b>точно так же</b>, как в первом сценарии — перематывай, если уже разобрал.</p>
+      <div class="callout"><span class="t">две проверки подряд — это не дублирование</span>
+      <code>Auth</code> отвечает «кто ты», <code>RequireAdmin</code> — «можно ли тебе». Разные вопросы, разные ответы: <b>401</b> означает «иди залогинься», <b>403</b> — «логин не поможет, тебе просто нельзя».</div>`,
+    code:`admin := v1.Group("/admin")
+admin.Use(middleware.Auth(deps.Tokens), middleware.RequireAdmin())
+{
+    admin.POST("/suggestions/:id/approve", deps.Suggestions.Approve)
+}
+
+// POST /api/v1/admin/suggestions/:id/approve --> ...Approve-fm (7 handlers)`,
+    lang:'go',
+    add:[['*gin.Context','из sync.Pool'],['ctx₂','логгер + дедлайн'],['model.AuthUser','role = admin']]
+  },
+  {
+    layer:'role', dir:'in', title:'RequireAdmin: проверка роли',
+    loc:'internal/middleware/role.go:26',
+    body:`<p>Множество допустимых ролей собирается <b>один раз при регистрации роута</b>, а не на каждый запрос. На двух ролях разница ничтожна, но привычка правильная: всё, что можно посчитать заранее, считается заранее.</p>
+      <div class="callout"><span class="t">почему проверка прав здесь, а не в хендлерах</span>
+      Middleware вешается на <b>группу</b>. Добавил новый админский роут — он автоматически защищён, забыть невозможно. Проверка внутри каждого хендлера, наоборот, забывается легко: скопировал соседний обработчик, удалил «лишнюю» строчку — и роут открыт. Так появляется большинство дыр в правах.</div>
+      <p>Отказ в правах логируется: единичный случай — обычно ошибка клиента, но <b>всплеск</b> таких записей означает, что систему щупают.</p>`,
+    code:`func RequireRole(roles ...model.Role) gin.HandlerFunc {
+    allowed := make(map[model.Role]struct{}, len(roles))   // ОДИН РАЗ
+    for _, r := range roles { allowed[r] = struct{}{} }
+
+    return func(c *gin.Context) {
+        user := MustGetAuthUser(c)
+
+        if _, ok := allowed[user.Role]; !ok {
+            logger.FromContext(c.Request.Context()).Warn("access denied: insufficient role", ...)
+            response.Error(c, apperr.Forbidden("insufficient permissions"))  // 403
+            return
+        }
+        c.Next()
+    }
+}`,
+    lang:'go'
+  },
+  {
+    layer:'handler', dir:'core', title:'Хендлер: необязательное тело запроса',
+    loc:'internal/handler/suggestion.go:213',
+    body:`<p>Одобрить можно молча — комментарий не обязателен. Поэтому <code>bindJSON</code> здесь не подходит: на пустом теле <code>ShouldBindJSON</code> вернёт <code>io.EOF</code>, и клиент получил бы 400 на совершенно нормальный запрос.</p>
+      <p>Разбираем вручную, игнорируя ошибку. Платим за это тем, что теряется валидация по тегам — поэтому длину комментария проверяем руками.</p>
+      <div class="callout"><span class="t">а вот при отклонении наоборот</span>
+      В <code>Reject</code> комментарий <b>обязателен</b>: автор должен понимать причину отказа. Это продуктовое требование, и место ему — в валидации запроса (<code>binding:"required"</code>) плюс дублирующая проверка в сервисе.</div>`,
+    code:`var req model.ApproveSuggestionRequest
+_ = c.ShouldBindJSON(&req)          // тело необязательно
+
+const maxCommentLen = 1000
+if req.Comment != nil && len(*req.Comment) > maxCommentLen {
+    response.ValidationError(c, "request validation failed", map[string]string{
+        "comment": "must be at most 1000 characters long",
+    })
+    return
+}
+
+reviewer := middleware.MustGetAuthUser(c)
+suggestion, err := h.suggestions.Approve(c.Request.Context(), id, reviewer, req.Comment)`,
+    lang:'go',
+    add:[['suggestionID','uuid.UUID'],['comment','*string']]
+  },
+  {
+    layer:'service', dir:'core', title:'Открывается транзакция',
+    loc:'internal/service/suggestion_service.go:164 → db/tx.go:89',
+    body:`<p>Вместо <code>s.tx.DB()</code> здесь <code>s.tx.WithTx(...)</code>. Два изменения обязаны произойти <b>вместе или никак</b>:</p>
+      <ul><li>карточка клиента меняется согласно payload;</li>
+          <li>предложение переводится в статус <code>approved</code>.</li></ul>
+      <div class="callout warn"><span class="t">что будет без транзакции</span>
+      Упали между шагами — и получили «предложение одобрено, а данные не изменились». Либо наоборот. Такие рассинхроны ищут неделями, потому что данные выглядят правдоподобно.</div>
+      <p>Именно ради этого <code>db.Querier</code> — интерфейс. <b>Методы репозитория не меняются</b>: <code>s.clients.Update(ctx, tx, client)</code> — тот же метод, что и <code>s.clients.Update(ctx, s.tx.DB(), client)</code>, просто исполнитель другой.</p>`,
+    code:`type Querier interface {
+    Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+    QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+    Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
+}
+// реализуют И *pgxpool.Pool, И pgx.Tx
+
+err := s.tx.WithTx(ctx, func(ctx context.Context, tx db.Querier) error {
+    // всё, что внутри — одна транзакция
+})`,
+    lang:'go',
+    add:[['pgx.Tx','BEGIN, соединение закреплено']]
+  },
+  {
+    layer:'repo', dir:'core', title:'Шаг 1 — читаем предложение с блокировкой строки',
+    loc:'internal/repository/suggestion_repo.go:133',
+    body:`<p><code>SELECT … FOR UPDATE</code> блокирует строку до конца транзакции.</p>
+      <div class="callout"><span class="t">что случится без блокировки</span>
+      Два администратора одновременно жмут «Одобрить». Оба прочитают статус <code>pending</code>, оба применят payload к карточке — <b>правка наложится дважды</b>, и в истории появятся два решения. <code>FOR UPDATE</code> выстраивает их в очередь: второй дождётся коммита первого.</div>
+      <p>Тонкость: <code>FOR UPDATE</code> нельзя ставить на запрос с <code>LEFT JOIN</code> — Postgres откажется блокировать «внешнюю» сторону соединения. Поэтому здесь простой SELECT без JOIN, только по нужной таблице.</p>`,
+    code:`SELECT id, client_id, author_id, payload, status,
+       reviewer_id, review_comment, created_at, reviewed_at
+FROM client_suggestions
+WHERE id = $1
+FOR UPDATE`,
+    lang:'sql',
+    add:[['🔒 блокировка','строка suggestion']]
+  },
+  {
+    layer:'service', dir:'core', title:'Шаг 2 — проверка состояния ПОСЛЕ блокировки',
+    loc:'internal/service/suggestion_service.go:186',
+    body:`<p>Порядок принципиален. Проверив состояние <b>до</b> блокировки, мы бы прочитали данные, которые к моменту записи уже устарели — это и есть классическая гонка «проверил, потом записал».</p>
+      <p>Если предложение уже рассмотрено — <b>409 Conflict</b> с внятным текстом.</p>`,
+    code:`suggestion, err := s.suggestions.GetByIDForUpdate(ctx, tx, id)   // блокировка
+if err != nil { return err }
+
+if !suggestion.IsPending() {                                    // проверка ПОСЛЕ
+    return apperr.Conflict(fmt.Sprintf(
+        "suggestion is already %s", suggestion.Status))
+}`,
+    lang:'go'
+  },
+  {
+    layer:'repo', dir:'core', title:'Шаг 3 — блокируем клиента. Порядок захвата важен',
+    loc:'internal/repository/client_repo.go:120',
+    body:`<div class="callout warn"><span class="t">единый порядок захвата — лекарство от дедлоков</span>
+      Сначала предложение, потом клиент. <b>Всегда, во всех методах.</b><br><br>
+      Если один код берёт блокировки в порядке A→B, а другой B→A, две транзакции заблокируют друг друга насмерть. Postgres такой дедлок обнаружит и убьёт одну из транзакций, но клиент получит ошибку на ровном месте.</div>
+      <p>Клиента могли мягко удалить, пока предложение висело в очереди. Применять правку не к чему — отвечаем <b>409</b>, а не 500.</p>`,
+    code:`client, err := s.clients.GetByIDForUpdate(ctx, tx, suggestion.ClientID)
+if err != nil {
+    if apperr.IsNotFound(err) {
+        return apperr.Conflict("client no longer exists or has been deleted")
+    }
+    return err
+}
+
+// SQL:
+//   SELECT ... FROM clients
+//   WHERE id = $1 AND deleted_at IS NULL      <- фильтр мягкого удаления
+//   FOR UPDATE`,
+    lang:'go',
+    add:[['🔒 блокировка','строка client'],['model.Client','текущее состояние']]
+  },
+  {
+    layer:'service', dir:'core', title:'Шаг 4 — Apply: семантика Optional в действии',
+    loc:'internal/model/suggestion.go:232',
+    body:`<p>Здесь окупается всё, что делалось на входе. Каждое поле обрабатывается по своему правилу:</p>
+      <table class="mini">
+        <tr><th>состояние в payload</th><th>что происходит</th></tr>
+        <tr><td>поля нет</td><td>карточка не трогается</td></tr>
+        <tr><td>явный <code>null</code></td><td>поле очищается (где колонка это допускает)</td></tr>
+        <tr><td>есть значение</td><td>записывается</td></tr>
+      </table>
+      <p><code>full_name</code> и <code>status</code> — колонки NOT NULL, поэтому реагируем только на непустое значение. Попытку прислать туда <code>null</code> отсекла валидация ещё при создании предложения.</p>`,
+    code:`func (p SuggestionPayload) Apply(c *Client) {
+    // NOT NULL: только непустое значение
+    if v, ok := p.FullName.Get(); ok { c.FullName = strings.TrimSpace(v) }
+    if v, ok := p.Status.Get();   ok { c.Status = v }
+
+    // Nullable: присутствие ключа = изменение, Value кладётся как есть
+    if p.Email.Present   { c.Email   = trimPtr(p.Email.Value)   }
+    if p.Phone.Present   { c.Phone   = trimPtr(p.Phone.Value)   }
+    if p.Company.Present { c.Company = trimPtr(p.Company.Value) }
+    if p.Notes.Present   { c.Notes   = p.Notes.Value            }
+}`,
+    lang:'go'
+  },
+  {
+    layer:'repo', dir:'core', title:'Шаг 5 — сохраняем карточку клиента',
+    loc:'internal/repository/client_repo.go:143',
+    body:`<p><code>updated_at</code> выставляет база через <code>now()</code>, а не приложение — снова затем, чтобы источник времени был один.</p>
+      <p><code>RETURNING</code> не вернул строку — значит, <code>WHERE</code> ничего не нашёл: клиента либо нет, либо он уже удалён.</p>
+      <div class="callout"><span class="t">здесь может прилететь 409 — и это нормальный исход</span>
+      Предложенный email уже занят другим клиентом. Транзакция откатится <b>целиком</b>: предложение останется <code>pending</code>, карточка не изменится, админ увидит внятную ошибку. Ровно этот сценарий покрыт тестом <code>«ошибка сохранения клиента откатывает всю операцию»</code>.</div>`,
+    code:`UPDATE clients
+SET full_name = $2, email = $3, phone = $4,
+    company = $5, notes = $6, status = $7,
+    updated_at = now()
+WHERE id = $1 AND deleted_at IS NULL
+RETURNING updated_at`,
+    lang:'sql'
+  },
+  {
+    layer:'repo', dir:'core', title:'Шаг 6 — помечаем предложение одобренным',
+    loc:'internal/repository/suggestion_repo.go:163',
+    body:`<p>Условие <code>AND status = 'pending'</code> прямо внутри <code>UPDATE</code> — <b>вторая линия защиты</b> поверх блокировки. Даже если кто-то вызовет этот метод вне транзакции, повторно рассмотреть уже рассмотренное предложение не выйдет: запрос просто не найдёт строку.</p>
+      <p>Приём называется оптимистической проверкой состояния в самом UPDATE — дёшево и надёжно.</p>
+      <p><code>CommandTag.RowsAffected() == 0</code> означает, что строки нет либо она уже не <code>pending</code>.</p>`,
+    code:`UPDATE client_suggestions
+SET status = $2, reviewer_id = $3, review_comment = $4, reviewed_at = now()
+WHERE id = $1 AND status = 'pending'`,
+    lang:'sql'
+  },
+  {
+    layer:'service', dir:'core', title:'COMMIT — обе записи зафиксированы',
+    loc:'internal/db/tx.go:132',
+    body:`<p>Функция вернула <code>nil</code> → <code>tx.Commit(ctx)</code>. Оба изменения стали видимы всем остальным одновременно, блокировки сняты.</p>
+      <div class="callout warn"><span class="t">context.WithoutCancel — неочевидная, но важная деталь</span>
+      Если запрос отменили (клиент ушёл, сработал таймаут), <code>ctx</code> уже мёртв, и обычный <code>ROLLBACK</code> по нему <b>просто не отправится</b>. Транзакция повиснет на сервере и будет держать блокировки, пока Postgres сам её не прибьёт.<br><br>
+      <code>context.WithoutCancel</code> (Go 1.21+) даёт контекст с теми же значениями, но без наследования отмены — ровно то, что нужно для завершающих операций.</div>
+      <p>Отдельный <code>defer</code> с <code>recover()</code> страхует от паники: без него транзакция осталась бы незакрытой, а соединение — <b>навсегда занятым в пуле</b>. Несколько таких паник исчерпают пул и положат сервис.</p>`,
+    code:`rollbackCtx := context.WithoutCancel(ctx)
+
+defer func() {
+    if p := recover(); p != nil {
+        _ = tx.Rollback(rollbackCtx)
+        panic(p)                       // панику не проглатываем
+    }
+}()
+
+if err := fn(ctx, tx); err != nil {
+    if rbErr := tx.Rollback(rollbackCtx); rbErr != nil && !errors.Is(rbErr, pgx.ErrTxClosed) {
+        return errors.Join(err, fmt.Errorf("rollback transaction: %w", rbErr))
+    }
+    return err
+}
+
+return tx.Commit(ctx)`,
+    lang:'go',
+    drop:['🔒 блокировка','pgx.Tx']
+  },
+  {
+    layer:'service', dir:'out', title:'Перечитывание — уже ПОСЛЕ коммита',
+    loc:'internal/service/suggestion_service.go:246',
+    body:`<p>Обычный запрос через пул, вне транзакции.</p>
+      <div class="callout"><span class="t">почему не внутри</span>
+      Чем короче транзакция, тем меньше время удержания блокировок и тем выше пропускная способность. Всё, что можно вынести за COMMIT, выносится за COMMIT.</div>
+      <p>Здесь же пишется аудит-запись в лог: <b>кто</b> и <b>что</b> одобрил. Содержимое карточки в лог не идёт — это персональные данные.</p>`,
+    code:`log.Info("suggestion approved",
+    slog.String("suggestion_id", id.String()),
+    slog.String("reviewer_id", reviewer.ID.String()),
+)
+
+return s.suggestions.GetByID(ctx, s.tx.DB(), id)   // пул, не транзакция`,
+    lang:'go',
+    add:[['model.SuggestionDetailed','status = approved']]
+  },
+  {
+    layer:'handler', dir:'out', title:'Ответ 200 и результат в базе',
+    loc:'internal/handler/suggestion.go:260',
+    body:`<p>Карточка клиента после одобрения — вот что реально изменилось:</p>
+      <pre style="margin:10px 0">"full_name": "Ivan Petrov",            <span style="color:var(--com)">// не трогали — осталось</span>
+"email":     "ivan.petrov@example.com" <span style="color:var(--com)">// не трогали — осталось</span>
+"phone":     "+7 999 888-77-66",       <span style="color:var(--ok)">// ← заменено</span>
+"company":   null,                     <span style="color:var(--ok)">// ← очищено явным null</span>
+"notes":     "Key account…",           <span style="color:var(--com)">// не трогали — осталось</span></pre>
+      <p>Дальше луковица разматывается ровно как в первом сценарии: Timeout → Logger (<code>status=200</code>) → Recovery → Context в пул.</p>
+      <div class="callout"><span class="t">итог сценария</span>
+      Транзакция + <code>FOR UPDATE</code> + единый порядок захвата блокировок + проверка состояния внутри UPDATE. Четыре приёма, каждый закрывает свой класс гонок. Убери любой — и появится способ получить рассинхрон между карточкой и историей.</div>`,
+    code:`response.OK(c, model.NewSuggestionDetailedResponse(suggestion))`,
+    lang:'go',
+    drop:['suggestionID','comment','model.Client','model.SuggestionDetailed','*gin.Context','ctx₂','model.AuthUser']
+  }
+]};
+
+/* ===========================================================================
+   СЦЕНАРИЙ 3 — ветка ошибки: как ошибка всплывает наверх
+   =========================================================================== */
+const S3 = {
+  id:'error', num:3,
+  tab:'Ветка ошибки (409)',
+  verb:'POST',
+  path:'/api/v1/clients/cccccccc-…/suggestions',
+  status:'409 Conflict', statusKind:'err',
+  reqNote:'У этого пользователя <b>уже есть</b> нерассмотренное предложение по этому клиенту.',
+  reqBody:'{"notes":"another attempt"}',
+  layers:FULL,
+  steps:[
+  {
+    layer:'repo', dir:'core', title:'Всё как обычно — до самого INSERT',
+    loc:'internal/repository/suggestion_repo.go:71',
+    body:`<p>Middleware отработали, тело разобрано, валидация пройдена, клиент существует. Сервис собрал <code>model.Suggestion</code> и позвал репозиторий.</p>
+      <p>И вот здесь Postgres отказывает: срабатывает частичный уникальный индекс <code>ux_suggestions_one_pending_per_author_client</code>.</p>
+      <div class="callout warn"><span class="t">почему не проверить заранее отдельным SELECT</span>
+      Схема «SELECT → нет такого → INSERT» — это <b>гонка</b>. Между проверкой и вставкой параллельный запрос успеет вставить то же самое. Единственный надёжный способ — попытаться вставить и разобрать отказ базы.</div>`,
+    code:`ERROR:  duplicate key value violates unique constraint
+        "ux_suggestions_one_pending_per_author_client"
+DETAIL: Key (client_id, author_id)=(cccccccc-…, bbbbbbbb-…) already exists.
+SQLSTATE: 23505`,
+    lang:'text',
+    add:[['*gin.Context','из sync.Pool'],['ctx₂','логгер + дедлайн'],['model.AuthUser','role = user'],['model.Suggestion','собран, но не вставлен']]
+  },
+  {
+    layer:'repo', dir:'out', title:'Разбор кода ошибки Postgres',
+    loc:'internal/db/tx.go:153',
+    body:`<p>pgx возвращает <code>*pgconn.PgError</code> с кодом SQLSTATE. Разбираем его и <b>превращаем в доменную ошибку</b>.</p>
+      <p>Параметр <code>constraint</code> позволяет отличить, <b>какое именно</b> ограничение нарушено, когда их на таблице несколько.</p>
+      <table class="mini">
+        <tr><th>SQLSTATE</th><th>смысл</th><th>наша ошибка</th></tr>
+        <tr><td><code>23505</code></td><td>нарушен UNIQUE</td><td><code>Conflict</code> → 409</td></tr>
+        <tr><td><code>23503</code></td><td>нарушен внешний ключ</td><td><code>NotFound</code> → 404</td></tr>
+      </table>`,
+    code:`if db.IsUniqueViolation(err, constraintOnePendingPerAuthorClient) {
+    return apperr.Conflict(
+        "you already have a pending suggestion for this client").Wrap(err)
+}
+if db.IsForeignKeyViolation(err) {
+    return apperr.NotFound("client").Wrap(err)      // клиента удалили в гонке
+}
+return fmt.Errorf("insert suggestion: %w", err)     // всё остальное`,
+    lang:'go',
+    add:[['*apperr.Error','conflict + внутренняя причина']]
+  },
+  {
+    layer:'service', dir:'out', title:'Сервис пропускает ошибку без изменений',
+    loc:'internal/service/suggestion_service.go:101',
+    body:`<p>Ошибка возвращается <b>как есть</b>. Заворачивать её ещё раз нельзя — потерялся бы тип, и <code>errors.As</code> выше уже не нашёл бы <code>*apperr.Error</code>.</p>
+      <div class="callout"><span class="t">ошибки не летят через panic</span>
+      Это обычное возвратное значение, которое всплывает вверх по стеку вызовов. Паника в Go — для ситуаций «программа в неконсистентном состоянии», а не для «пользователь прислал дубликат».</div>
+      <p>Обрати внимание: логгер здесь <b>ничего не пишет</b>. Ошибку запишет middleware на пути наружу — одной строкой, со статусом и длительностью. Дублировать её на каждом слое значит утроить объём логов ни за чем.</p>`,
+    code:`if err := s.suggestions.Create(ctx, s.tx.DB(), suggestion); err != nil {
+    return nil, err        // как есть, без обёртки
+}`,
+    lang:'go'
+  },
+  {
+    layer:'handler', dir:'out', title:'Хендлер: одна строчка на все ошибки',
+    loc:'internal/handler/suggestion.go:68',
+    body:`<p>Хендлер не разбирает, что за ошибка. Он просто передаёт её в <code>response.Error</code> — тот сам разберётся.</p>
+      <p>Именно поэтому во всех хендлерах ветка ошибки выглядит одинаково: три строки, и никакого <code>switch</code> по типам.</p>`,
+    code:`suggestion, err := h.suggestions.Create(c.Request.Context(), clientID, author, payload)
+if err != nil {
+    response.Error(c, err)     // принимает ЛЮБУЮ ошибку
+    return
+}`,
+    lang:'go'
+  },
+  {
+    layer:'handler', dir:'out', title:'apperr.From — поиск нашей ошибки в цепочке',
+    loc:'internal/apperr/apperr.go:193',
+    body:`<p><code>errors.As</code> идёт по цепочке обёрток (<code>Unwrap</code>) и ищет <code>*apperr.Error</code>.</p>
+      <ul>
+        <li><b>нашёлся</b> → берём его <code>Code</code>, <code>Message</code> и <code>Details</code>;</li>
+        <li><b>не нашёлся</b> → это неожиданная ошибка → <code>apperr.Internal(err)</code>.</li>
+      </ul>
+      <div class="callout errc"><span class="t">это защита от утечки внутренностей</span>
+      Во втором случае клиенту уйдёт обезличенное <code>"internal server error"</code>, а настоящий текст — например <code>FATAL: no pg_hba.conf entry for host "10.0.3.17"</code> — останется во внутреннем поле и попадёт <b>только в лог</b>.<br><br>
+      Отдать наружу текст ошибки Postgres значит подарить атакующему кусок карты внутренней сети и структуры базы. Этот случай покрыт тестом <code>«неожиданная ошибка не раскрывает внутренности»</code>.</div>`,
+    code:`func From(err error) *Error {
+    if err == nil { return nil }
+
+    var appErr *Error
+    if errors.As(err, &appErr) {
+        return appErr           // наша доменная ошибка
+    }
+
+    return Internal(err)        // чужая -> прячем подробности
+}`,
+    lang:'go'
+  },
+  {
+    layer:'handler', dir:'out', title:'Код ошибки → HTTP-статус',
+    loc:'internal/apperr/apperr.go:83',
+    body:`<p>Это <b>единственное место в проекте</b>, где доменные ошибки встречаются с протоколом HTTP. Всё остальное приложение о HTTP не знает вообще.</p>
+      <p>Клиент должен принимать решения <b>по коду</b>, а не по тексту: текст можно переписать или перевести в любой момент, код — контракт.</p>`,
+    code:`func (e *Error) HTTPStatus() int {
+    switch e.Code {
+    case CodeValidation:       return 400
+    case CodeUnauthorized:     return 401
+    case CodeForbidden:        return 403
+    case CodeNotFound:         return 404
+    case CodeMethodNotAllowed: return 405
+    case CodeConflict:         return 409   // <- мы здесь
+    case CodeTimeout:          return 504
+    default:                   return 500
+    }
+}`,
+    lang:'go'
+  },
+  {
+    layer:'handler', dir:'out', title:'Ответ в едином формате + Abort',
+    loc:'internal/response/response.go:62',
+    body:`<p><code>request_id</code> берётся <b>из уже записанных заголовков ответа</b>, а не из <code>gin.Context</code>. Благодаря этому пакет <code>response</code> не зависит от пакета <code>middleware</code> — иначе получился бы цикл импортов (<code>handler ⇄ middleware</code>).</p>
+      <div class="callout warn"><span class="t">почему AbortWithStatusJSON, а не просто JSON</span>
+      <code>Abort</code> обрывает цепочку. Без него следующие обработчики попробуют записать <b>ещё один ответ поверх нашего</b> — клиент получит склеенный мусор.</div>`,
+    code:`{
+  "error": {
+    "code": "conflict",
+    "message": "you already have a pending suggestion for this client",
+    "request_id": "73b2ce08-d850-448b-afa1-c54465639506"
+  }
+}`,
+    lang:'json',
+    add:[['ErrorResponse','код + сообщение + request_id']]
+  },
+  {
+    layer:'logger', dir:'out', title:'Logger: WARN, а не ERROR',
+    loc:'internal/middleware/logger.go:88',
+    body:`<p>Статус 409 попадает в диапазон 4xx → уровень <b>WARN</b>.</p>
+      <div class="callout"><span class="t">почему это принципиально</span>
+      409 — это <b>вина клиента</b>, а не сбой сервиса. Всё работает штатно: правило сработало, пользователь получил понятное объяснение.<br><br>
+      Если писать сюда ERROR, то за сутки накопятся сотни «ошибок», на алерты перестанут реагировать, и настоящая авария утонет в шуме. Ровно так ломается мониторинг.</div>
+      <p>Подробности исходной ошибки Postgres — те, что были сохранены через <code>.Wrap(err)</code> — остаются доступны в поле <code>err</code> и при необходимости пишутся отдельно. Клиенту они не ушли.</p>`,
+    code:`{"time":"2026-08-16T10:45:48Z","level":"WARN","msg":"request handled",
+ "request_id":"73b2ce08-d850-448b-afa1-c54465639506",
+ "method":"POST",
+ "path":"/api/v1/clients/cccccccc-.../suggestions",
+ "status":409,
+ "duration_ms":8,
+ "client_ip":"172.18.0.1"}`,
+    lang:'json'
+  },
+  {
+    layer:'gin', dir:'out', title:'Итог: три правила обработки ошибок',
+    loc:'сводка',
+    body:`<table class="mini">
+        <tr><th>слой</th><th>что делает с ошибкой</th></tr>
+        <tr><td><code>repository</code></td><td>превращает код SQLSTATE в доменную ошибку, сохраняет исходную через <code>Wrap</code></td></tr>
+        <tr><td><code>service</code></td><td>пропускает как есть либо добавляет свою бизнес-ошибку</td></tr>
+        <tr><td><code>handler</code></td><td>одна строка: <code>response.Error(c, err)</code></td></tr>
+        <tr><td><code>response</code></td><td><code>apperr.From</code> → статус → JSON → <code>Abort</code></td></tr>
+        <tr><td><code>middleware</code></td><td>пишет одну строку в лог с уровнем по статусу</td></tr>
+      </table>
+      <div class="callout"><span class="t">три правила, которые стоит унести с собой</span>
+      <b>1.</b> Клиенту — безопасное сообщение, в лог — подробности.<br>
+      <b>2.</b> Формат ошибки одинаковый на всех роутах, иначе клиент пишет разбор под каждую ручку.<br>
+      <b>3.</b> Уровень лога — по коду ответа, а не по настроению. 4xx это не авария.</div>`,
+    code:`repository → apperr.Conflict(...).Wrap(pgErr)
+   service  → return err
+   handler  → response.Error(c, err)
+  response  → apperr.From → HTTPStatus() → AbortWithStatusJSON
+    logger  → level=WARN status=409`,
+    lang:'text',
+    drop:['*gin.Context','ctx₂','model.AuthUser','model.Suggestion','*apperr.Error','ErrorResponse']
+  }
+]};
+
+const SCENARIOS = [S1, S2, S3];
+
+/* ===========================================================================
+   Подсветка синтаксиса — крошечная, без внешних библиотек.
+   Сначала вырезаем комментарии и строки, потом красим ключевые слова
+   только в оставшихся кусках (иначе покрасили бы слова внутри строк).
+   =========================================================================== */
+const KEYWORDS = {
+  go:/\b(func|return|if|else|for|range|var|const|type|struct|interface|map|chan|go|defer|switch|case|default|package|import|nil|true|false|error|string|int|int8|int32|int64|bool|byte|any|make|new|len|panic|recover|append)\b/g,
+  sql:/\b(SELECT|INSERT|INTO|VALUES|UPDATE|SET|DELETE|FROM|WHERE|AND|OR|NOT|NULL|IS|JOIN|LEFT|INNER|ON|AS|ORDER|BY|LIMIT|OFFSET|RETURNING|FOR|CREATE|UNIQUE|INDEX|CONSTRAINT|CHECK|BEGIN|COMMIT|ROLLBACK|now|DETAIL|ERROR|SQLSTATE)\b/g,
+  json:/\b(true|false|null)\b/g,
+  text:/\b(ERROR|DETAIL|SQLSTATE)\b/g
+};
+
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function paint(chunk, lang){
+  let out = esc(chunk);
+  const kw = KEYWORDS[lang];
+  if (kw) out = out.replace(kw, '<span class="k">$1</span>');
+  out = out.replace(/(\$\d+)/g, '<span class="ph">$1</span>');          // $1 $2 плейсхолдеры
+  out = out.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="n">$1</span>');
+  out = out.replace(/\b([A-Za-z_][\w.]*)\(/g, '<span class="f">$1</span>(');
+  return out;
+}
+
+function highlight(code, lang){
+  lang = lang || 'text';
+  // Комментарии (// и --) и строки в кавычках вырезаем целиком.
+  const re = /(\/\/[^\n]*|--[^\n]*|"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*')/g;
+  let res = '', last = 0, m;
+  while ((m = re.exec(code)) !== null){
+    res += paint(code.slice(last, m.index), lang);
+    const tok = m[0];
+    const cls = (tok.startsWith('//') || tok.startsWith('--')) ? 'c' : 's';
+    res += '<span class="' + cls + '">' + esc(tok) + '</span>';
+    last = m.index + tok.length;
+  }
+  res += paint(code.slice(last), lang);
+  return res;
+}
+
+/* ===========================================================================
+   Состояние приложения
+   =========================================================================== */
+let si = 0;      // индекс сценария
+let pi = 0;      // индекс шага
+let timer = null;
+
+const $ = id => document.getElementById(id);
+
+function scenario(){ return SCENARIOS[si] }
+function step(){ return scenario().steps[pi] }
+
+/* Накопленное состояние памяти на текущий шаг: применяем add/drop по порядку. */
+function memoryAt(index){
+  const live = [];          // [key, value, addedAtStep]
+  const sc = scenario();
+  for (let i = 0; i <= index; i++){
+    const st = sc.steps[i];
+    (st.drop || []).forEach(key => {
+      const at = live.findIndex(x => x[0] === key);
+      if (at >= 0) live.splice(at, 1);
+    });
+    (st.add || []).forEach(([k, v]) => {
+      const at = live.findIndex(x => x[0] === k);
+      if (at >= 0) live[at] = [k, v, i]; else live.push([k, v, i]);
+    });
+  }
+  return live;
+}
+
+/* ===========================================================================
+   Отрисовка
+   =========================================================================== */
+function renderTabs(){
+  $('tabs').innerHTML = SCENARIOS.map((s, i) =>
+    '<button class="tab" role="tab" aria-selected="' + (i === si) + '" data-s="' + i + '">' +
+      '<span class="num">' + s.num + '</span>' + s.tab +
+    '</button>'
+  ).join('');
+  $('tabs').querySelectorAll('.tab').forEach(b => {
+    b.onclick = () => { si = +b.dataset.s; pi = 0; stopAuto(); renderAll(); };
+  });
+}
+
+function renderReqCard(){
+  const s = scenario();
+  $('reqcard').innerHTML =
+    '<div class="reqline">' +
+      '<span class="verb">' + s.verb + '</span>' +
+      '<span class="path">' + esc(s.path) + '</span>' +
+      '<span class="badge ' + s.statusKind + '">' + s.status + '</span>' +
+    '</div>' +
+    '<div class="reqbody">' + s.reqNote +
+      '<pre style="margin-top:8px">' + highlight(s.reqBody, 'json') + '</pre>' +
+    '</div>';
+}
+
+function renderStack(){
+  const s = scenario();
+  const cur = step().layer;
+
+  // Слои, которые запрос УЖЕ проходил в этом сценарии (для отметки «пройден»).
+  const visited = new Set();
+  for (let i = 0; i <= pi; i++) visited.add(s.steps[i].layer);
+
+  const dir = step().dir;
+  const arrow = dir === 'in' ? '↓ внутрь' : dir === 'out' ? '↑ наружу' : '● дно';
+
+  // Строим вложенные блоки от внешнего к внутреннему.
+  let html = '';
+  for (let i = s.layers.length - 1; i >= 0; i--){
+    const key = s.layers[i];
+    const isCur = key === cur;
+    const isDone = visited.has(key) && !isCur;
+    const cls = 'layer clickable' + (isCur ? ' active' : isDone ? ' done' : '');
+    html =
+      '<div class="' + cls + '" data-layer="' + key + '">' +
+        '<div class="lname"><span class="dot"></span>' + LAYERS[key] +
+          (isCur ? '<span class="arrow">' + arrow + '</span>' : '') +
+        '</div>' +
+        (html ? '<div class="kids">' + html + '</div>' : '') +
+      '</div>';
+  }
+  $('stack').innerHTML = html;
+
+  // Клик по слою — прыжок к его первому шагу.
+  // Если мы уже на этом слое, переходим к СЛЕДУЮЩЕМУ его шагу по кругу:
+  // так удобно листать, например, все три шага внутри Auth.
+  $('stack').querySelectorAll('.layer').forEach(el => {
+    el.onclick = ev => {
+      ev.stopPropagation();                       // не всплывать во внешние слои
+      const key = el.dataset.layer;
+
+      const idxs = [];
+      scenario().steps.forEach((st, i) => { if (st.layer === key) idxs.push(i); });
+      if (!idxs.length) return;
+
+      const cur = idxs.indexOf(pi);               // -1, если мы не на этом слое
+      pi = idxs[(cur + 1) % idxs.length];
+
+      stopAuto();
+      renderAll();
+    };
+  });
+}
+
+function renderState(){
+  const live = memoryAt(pi);
+  if (!live.length){ $('state').innerHTML = '<div class="empty">пока ничего не создано</div>'; return; }
+  $('state').innerHTML = '<ul>' + live.map(([k, v, at]) =>
+    '<li class="' + (at === pi ? 'fresh' : '') + '">' +
+      '<span class="k">' + esc(k) + '</span>' +
+      '<span class="v">' + esc(v) + '</span>' +
+    '</li>'
+  ).join('') + '</ul>';
+}
+
+function renderStep(){
+  const st = step();
+  const dirLabel = st.dir === 'in' ? '↓ ПУТЬ ВНУТРЬ' : st.dir === 'out' ? '↑ ПУТЬ НАРУЖУ' : '● ДНО ЛУКОВИЦЫ';
+  const dirCls = st.dir === 'in' ? 'in' : st.dir === 'out' ? 'out' : 'core';
+
+  $('step').innerHTML =
+    '<div class="stephead">' +
+      '<span class="dirbadge ' + dirCls + '">' + dirLabel + '</span>' +
+      '<span class="stepno">шаг ' + (pi + 1) + ' из ' + scenario().steps.length + '</span>' +
+    '</div>' +
+    '<h3>' + st.title + '</h3>' +
+    '<span class="loc">' + esc(st.loc) + '</span>' +
+    st.body +
+    (st.code ? '<div class="codelabel">' + (st.lang || 'text') + '</div><pre>' + highlight(st.code, st.lang) + '</pre>' : '');
+}
+
+function renderControls(){
+  const n = scenario().steps.length;
+  $('counter').textContent = (pi + 1) + ' / ' + n;
+  $('prev').disabled = pi === 0;
+  $('next').disabled = pi === n - 1;
+  $('bar').style.width = (n > 1 ? (pi / (n - 1)) * 100 : 100) + '%';
+
+  $('dots').innerHTML = scenario().steps.map((_, i) =>
+    '<button data-i="' + i + '" class="' + (i === pi ? 'cur' : i < pi ? 'seen' : '') +
+    '" title="шаг ' + (i + 1) + '"></button>'
+  ).join('');
+  $('dots').querySelectorAll('button').forEach(b => {
+    b.onclick = () => { pi = +b.dataset.i; stopAuto(); renderAll(); };
+  });
+}
+
+function renderAll(){
+  renderTabs(); renderReqCard(); renderStack(); renderState(); renderStep(); renderControls();
+}
+
+/* ===========================================================================
+   Навигация
+   =========================================================================== */
+function go(delta){
+  const n = scenario().steps.length;
+  const next = pi + delta;
+  if (next < 0 || next >= n){ stopAuto(); return; }
+  pi = next;
+  renderAll();
+  // На узком экране прокручиваем к описанию шага.
+  if (window.innerWidth <= 1000){
+    document.querySelector('.right').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+}
+
+function startAuto(){
+  stopAuto();
+  $('play').textContent = '⏸ Стоп';
+  timer = setInterval(() => {
+    if (pi >= scenario().steps.length - 1){ stopAuto(); return; }
+    go(1);
+  }, 4200);
+}
+function stopAuto(){
+  if (timer){ clearInterval(timer); timer = null; }
+  $('play').textContent = '▶ Авто';
+}
+
+$('prev').onclick = () => { stopAuto(); go(-1); };
+$('next').onclick = () => { stopAuto(); go(1); };
+$('play').onclick = () => timer ? stopAuto() : startAuto();
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'ArrowRight' || e.key === ' '){ e.preventDefault(); stopAuto(); go(1); }
+  else if (e.key === 'ArrowLeft'){ e.preventDefault(); stopAuto(); go(-1); }
+  else if (e.key === 'Home'){ e.preventDefault(); stopAuto(); pi = 0; renderAll(); }
+  else if (e.key === 'End'){ e.preventDefault(); stopAuto(); pi = scenario().steps.length - 1; renderAll(); }
+});
+
+/* ===========================================================================
+   Переключатель темы: авто → светлая → тёмная
+   =========================================================================== */
+const THEMES = ['auto', 'light', 'dark'];
+const THEME_LABEL = {auto:'Тема: авто', light:'Тема: светлая', dark:'Тема: тёмная'};
+let ti = 0;
+try {
+  const saved = localStorage.getItem('flow-theme');
+  if (saved && THEMES.indexOf(saved) >= 0) ti = THEMES.indexOf(saved);
+} catch (e) { /* localStorage может быть недоступен — не страшно */ }
+
+function applyTheme(){
+  document.documentElement.dataset.theme = THEMES[ti];
+  $('theme').textContent = THEME_LABEL[THEMES[ti]];
+  try { localStorage.setItem('flow-theme', THEMES[ti]); } catch (e) {}
+}
+$('theme').onclick = () => { ti = (ti + 1) % THEMES.length; applyTheme(); };
+
+applyTheme();
+renderAll();
+</script>
+</body>
+</html>
