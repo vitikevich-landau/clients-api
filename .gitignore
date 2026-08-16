@@ -1,0 +1,34 @@
+# Собранные бинарники
+bin/
+/api
+
+# Локальная конфигурация с секретами.
+# В репозиторий попадает только .env.example.
+.env
+.env.local
+*.env
+!.env.example
+
+# Отчёты о покрытии тестами
+coverage.out
+coverage.html
+*.test
+
+# Профили производительности
+*.prof
+cpu.out
+mem.out
+
+# Каталоги IDE
+.idea/
+.vscode/
+*.iml
+
+# Служебные файлы ОС
+.DS_Store
+Thumbs.db
+
+# Временные файлы редакторов
+*~
+*.swp
+*.swo

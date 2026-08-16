@@ -1,0 +1,1440 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Учебный продакшн-подобный сервис учёта клиентов.\n\nКлючевая механика: обычный пользователь не редактирует карточку\nклиента напрямую — он ПРЕДЛАГАЕТ правку, которая применяется\nтолько после одобрения администратором.\n\nДемо-учётки (заводятся миграцией 00004):\nadmin@example.com / admin12345 — роль admin\nuser@example.com / user12345 — роль user",
+        "title": "Clients API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api/v1",
+    "paths": {
+        "/admin/clients": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Доступно только администратору.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Создать клиента",
+                "parameters": [
+                    {
+                        "description": "Данные клиента",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.CreateClientRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.ClientResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Недостаточно прав",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Email уже занят другим клиентом",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/clients/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Доступно только администратору. PUT означает ПОЛНУЮ ЗАМЕНУ:\nнепереданные необязательные поля будут очищены.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Изменить клиента",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID клиента",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Новые данные клиента",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.UpdateClientRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.ClientResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Мягкое удаление: строка остаётся в базе с меткой deleted_at,\nно исчезает из всех выдач.",
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Удалить клиента",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID клиента",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Удалено, тела ответа нет"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Уже удалён или не существует",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/suggestions": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Все предложения всех авторов. Доступно только администратору.\nОбычный сценарий: ?status=pending — что ждёт рассмотрения.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Очередь модерации",
+                "parameters": [
+                    {
+                        "enum": [
+                            "pending",
+                            "approved",
+                            "rejected"
+                        ],
+                        "type": "string",
+                        "description": "Фильтр по статусу",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Фильтр по клиенту (UUID)",
+                        "name": "client_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Записей на страницу (1..100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Сколько пропустить",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.ListResponse-github_com_vitikevich-landau_clients-api_internal_model_SuggestionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/suggestions/{id}/approve": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Атомарно применяет payload к карточке клиента и переводит\nпредложение в статус approved. Только для администратора.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Одобрить предложение",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID предложения",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Необязательный комментарий",
+                        "name": "request",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.ApproveSuggestionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.SuggestionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Предложение не найдено",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Уже рассмотрено, клиент удалён или email занят",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/suggestions/{id}/reject": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Переводит предложение в статус rejected. Комментарий\nобязателен — автор должен понимать причину отказа.\nТолько для администратора.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Отклонить предложение",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID предложения",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Причина отказа",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.RejectSuggestionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.SuggestionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Не указан комментарий",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Уже рассмотрено",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "description": "Возвращает JWT для доступа к защищённым эндпоинтам.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Вход в систему",
+                "parameters": [
+                    {
+                        "description": "Email и пароль",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.AuthResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Не прошла валидация",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Неверный email или пароль",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает актуальные данные владельца токена из базы.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Текущий пользователь",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.UserResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Нет или невалиден токен",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь удалён",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/register": {
+            "post": {
+                "description": "Создаёт пользователя с ролью user и сразу возвращает JWT.\nРоль admin через этот эндпоинт получить нельзя.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Регистрация нового пользователя",
+                "parameters": [
+                    {
+                        "description": "Email и пароль",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.AuthResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Не прошла валидация",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Email уже занят",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/clients": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Постраничная выдача с поиском по имени и компании,\nфильтром по статусу и сортировкой.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "clients"
+                ],
+                "summary": "Список клиентов",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Поиск по имени или компании",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "active",
+                            "archived"
+                        ],
+                        "type": "string",
+                        "description": "Фильтр по статусу",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Записей на страницу (1..100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Сколько пропустить",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "created_at",
+                            "updated_at",
+                            "full_name"
+                        ],
+                        "type": "string",
+                        "default": "created_at",
+                        "description": "Поле сортировки",
+                        "name": "sort_by",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "asc",
+                            "desc"
+                        ],
+                        "type": "string",
+                        "default": "desc",
+                        "description": "Направление",
+                        "name": "sort_order",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.ListResponse-github_com_vitikevich-landau_clients-api_internal_model_ClientResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/clients/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "clients"
+                ],
+                "summary": "Карточка клиента",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID клиента",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.ClientResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный UUID",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Клиент не найден или удалён",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/clients/{id}/suggestions": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Карточка клиента НЕ меняется. Создаётся предложение\nсо статусом pending, которое рассмотрит администратор.\nТело — частичное изменение по правилам JSON Merge Patch:\nзначение = заменить, null = очистить, отсутствие ключа = не трогать.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "suggestions"
+                ],
+                "summary": "Предложить правку клиента",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID клиента",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Предлагаемые изменения",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.SuggestionPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.SuggestionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Пустой или невалидный payload",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Клиент не найден",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "У вас уже есть нерассмотренное предложение по этому клиенту",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/healthz": {
+            "get": {
+                "description": "Всегда 200, если процесс отвечает. Внешние зависимости не проверяет.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Проба живучести",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/readyz": {
+            "get": {
+                "description": "Проверяет доступность базы. 503, если база не отвечает.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Проба готовности",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "503": {
+                        "description": "База недоступна",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/suggestions/my": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Показывает только предложения, созданные текущим пользователем,\nвместе с их статусами и комментариями модератора.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "suggestions"
+                ],
+                "summary": "Мои предложения",
+                "parameters": [
+                    {
+                        "enum": [
+                            "pending",
+                            "approved",
+                            "rejected"
+                        ],
+                        "type": "string",
+                        "description": "Фильтр по статусу",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Фильтр по клиенту (UUID)",
+                        "name": "client_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Записей на страницу (1..100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Сколько пропустить",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.ListResponse-github_com_vitikevich-landau_clients-api_internal_model_SuggestionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/suggestions/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Обычный пользователь видит только свои предложения.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "suggestions"
+                ],
+                "summary": "Одно предложение",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID предложения",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.SuggestionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Не найдено либо принадлежит другому пользователю",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "github_com_vitikevich-landau_clients-api_internal_apperr.Code": {
+            "type": "string",
+            "enum": [
+                "validation_error",
+                "unauthorized",
+                "forbidden",
+                "not_found",
+                "method_not_allowed",
+                "conflict",
+                "timeout",
+                "internal_error"
+            ],
+            "x-enum-comments": {
+                "CodeConflict": "нарушение уникальности / бизнес-правила",
+                "CodeForbidden": "токен есть, но прав не хватает",
+                "CodeInternal": "всё остальное, наша вина",
+                "CodeMethodNotAllowed": "путь есть, метод не тот",
+                "CodeNotFound": "объект не существует",
+                "CodeTimeout": "не уложились в отведённое время",
+                "CodeUnauthorized": "нет токена или он невалиден",
+                "CodeValidation": "невалидные входные данные"
+            },
+            "x-enum-descriptions": [
+                "невалидные входные данные",
+                "нет токена или он невалиден",
+                "токен есть, но прав не хватает",
+                "объект не существует",
+                "путь есть, метод не тот",
+                "нарушение уникальности / бизнес-правила",
+                "не уложились в отведённое время",
+                "всё остальное, наша вина"
+            ],
+            "x-enum-varnames": [
+                "CodeValidation",
+                "CodeUnauthorized",
+                "CodeForbidden",
+                "CodeNotFound",
+                "CodeMethodNotAllowed",
+                "CodeConflict",
+                "CodeTimeout",
+                "CodeInternal"
+            ]
+        },
+        "github_com_vitikevich-landau_clients-api_internal_model.ApproveSuggestionRequest": {
+            "type": "object",
+            "properties": {
+                "comment": {
+                    "type": "string",
+                    "maxLength": 1000
+                }
+            }
+        },
+        "github_com_vitikevich-landau_clients-api_internal_model.AuthResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "expires_in": {
+                    "description": "ExpiresIn — сколько СЕКУНД токен ещё живёт.\nОтносительное время, а не абсолютное: клиенту не нужно\nиметь правильно выставленные часы, чтобы понять срок.",
+                    "type": "integer"
+                },
+                "token_type": {
+                    "description": "TokenType всегда \"Bearer\" — подсказка клиенту, что токен\nнадо слать в заголовке Authorization: Bearer \u003ctoken\u003e.",
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.UserResponse"
+                }
+            }
+        },
+        "github_com_vitikevich-landau_clients-api_internal_model.ClientResponse": {
+            "type": "object",
+            "properties": {
+                "company": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.ClientStatus"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_vitikevich-landau_clients-api_internal_model.ClientStatus": {
+            "type": "string",
+            "enum": [
+                "active",
+                "archived"
+            ],
+            "x-enum-comments": {
+                "ClientStatusActive": "работаем с клиентом",
+                "ClientStatusArchived": "в архиве, но не удалён"
+            },
+            "x-enum-descriptions": [
+                "работаем с клиентом",
+                "в архиве, но не удалён"
+            ],
+            "x-enum-varnames": [
+                "ClientStatusActive",
+                "ClientStatusArchived"
+            ]
+        },
+        "github_com_vitikevich-landau_clients-api_internal_model.CreateClientRequest": {
+            "type": "object",
+            "required": [
+                "full_name"
+            ],
+            "properties": {
+                "company": {
+                    "type": "string",
+                    "maxLength": 200
+                },
+                "email": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "full_name": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "minLength": 1
+                },
+                "notes": {
+                    "type": "string",
+                    "maxLength": 2000
+                },
+                "phone": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 3
+                },
+                "status": {
+                    "description": "Если статус не передали, применится ClientStatusActive.",
+                    "enum": [
+                        "active",
+                        "archived"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.ClientStatus"
+                        }
+                    ]
+                }
+            }
+        },
+        "github_com_vitikevich-landau_clients-api_internal_model.ListResponse-github_com_vitikevich-landau_clients-api_internal_model_ClientResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.ClientResponse"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.Pagination"
+                }
+            }
+        },
+        "github_com_vitikevich-landau_clients-api_internal_model.ListResponse-github_com_vitikevich-landau_clients-api_internal_model_SuggestionResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.SuggestionResponse"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.Pagination"
+                }
+            }
+        },
+        "github_com_vitikevich-landau_clients-api_internal_model.LoginRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_vitikevich-landau_clients-api_internal_model.Optional-github_com_vitikevich-landau_clients-api_internal_model_ClientStatus": {
+            "type": "object",
+            "properties": {
+                "present": {
+                    "description": "Present — ключ присутствовал во входном JSON.",
+                    "type": "boolean"
+                },
+                "value": {
+                    "description": "Value — само значение. nil при Present=true означает явный null.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.ClientStatus"
+                        }
+                    ]
+                }
+            }
+        },
+        "github_com_vitikevich-landau_clients-api_internal_model.Optional-string": {
+            "type": "object",
+            "properties": {
+                "present": {
+                    "description": "Present — ключ присутствовал во входном JSON.",
+                    "type": "boolean"
+                },
+                "value": {
+                    "description": "Value — само значение. nil при Present=true означает явный null.",
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_vitikevich-landau_clients-api_internal_model.Pagination": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer"
+                },
+                "offset": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_vitikevich-landau_clients-api_internal_model.RegisterRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "password": {
+                    "description": "max=72 — это не каприз, а ограничение bcrypt: алгоритм работает\nмаксимум с 72 байтами. Более длинные пароли современные версии\nx/crypto отвергают ошибкой (старые молча обрезали, что было хуже:\nпароли \"…длинный…AAA\" и \"…длинный…BBB\" оказывались одинаковыми).",
+                    "type": "string",
+                    "maxLength": 72,
+                    "minLength": 8
+                }
+            }
+        },
+        "github_com_vitikevich-landau_clients-api_internal_model.RejectSuggestionRequest": {
+            "type": "object",
+            "required": [
+                "comment"
+            ],
+            "properties": {
+                "comment": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "minLength": 1
+                }
+            }
+        },
+        "github_com_vitikevich-landau_clients-api_internal_model.Role": {
+            "type": "string",
+            "enum": [
+                "user",
+                "admin"
+            ],
+            "x-enum-varnames": [
+                "RoleUser",
+                "RoleAdmin"
+            ]
+        },
+        "github_com_vitikevich-landau_clients-api_internal_model.SuggestionPayload": {
+            "type": "object",
+            "properties": {
+                "company": {
+                    "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.Optional-string"
+                },
+                "email": {
+                    "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.Optional-string"
+                },
+                "full_name": {
+                    "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.Optional-string"
+                },
+                "notes": {
+                    "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.Optional-string"
+                },
+                "phone": {
+                    "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.Optional-string"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.Optional-github_com_vitikevich-landau_clients-api_internal_model_ClientStatus"
+                }
+            }
+        },
+        "github_com_vitikevich-landau_clients-api_internal_model.SuggestionResponse": {
+            "type": "object",
+            "properties": {
+                "author_email": {
+                    "description": "Поля из связанных таблиц. Заполняются не всегда,\nпоэтому omitempty — чтобы не слать пустые строки без нужды.",
+                    "type": "string"
+                },
+                "author_id": {
+                    "type": "string"
+                },
+                "changed_fields": {
+                    "description": "ChangedFields — плоский список имён полей.\nДублирует информацию из payload, но позволяет фронтенду\nнарисовать \"предложено изменить: телефон, заметки\"\nбез разбора структуры payload.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "client_id": {
+                    "type": "string"
+                },
+                "client_name": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "payload": {
+                    "description": "Payload сериализуется нашим MarshalJSON — то есть содержит\nтолько те поля, которые реально предложены к изменению.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.SuggestionPayload"
+                        }
+                    ]
+                },
+                "review_comment": {
+                    "type": "string"
+                },
+                "reviewed_at": {
+                    "type": "string"
+                },
+                "reviewer_email": {
+                    "type": "string"
+                },
+                "reviewer_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.SuggestionStatus"
+                }
+            }
+        },
+        "github_com_vitikevich-landau_clients-api_internal_model.SuggestionStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "approved",
+                "rejected"
+            ],
+            "x-enum-comments": {
+                "SuggestionStatusApproved": "одобрено и применено",
+                "SuggestionStatusPending": "ждёт модерации",
+                "SuggestionStatusRejected": "отклонено"
+            },
+            "x-enum-descriptions": [
+                "ждёт модерации",
+                "одобрено и применено",
+                "отклонено"
+            ],
+            "x-enum-varnames": [
+                "SuggestionStatusPending",
+                "SuggestionStatusApproved",
+                "SuggestionStatusRejected"
+            ]
+        },
+        "github_com_vitikevich-landau_clients-api_internal_model.UpdateClientRequest": {
+            "type": "object",
+            "required": [
+                "full_name"
+            ],
+            "properties": {
+                "company": {
+                    "type": "string",
+                    "maxLength": 200
+                },
+                "email": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "full_name": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "minLength": 1
+                },
+                "notes": {
+                    "type": "string",
+                    "maxLength": 2000
+                },
+                "phone": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 3
+                },
+                "status": {
+                    "enum": [
+                        "active",
+                        "archived"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.ClientStatus"
+                        }
+                    ]
+                }
+            }
+        },
+        "github_com_vitikevich-landau_clients-api_internal_model.UserResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "role": {
+                    "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_model.Role"
+                }
+            }
+        },
+        "github_com_vitikevich-landau_clients-api_internal_response.ErrorBody": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "Code — машиночитаемый код: not_found, validation_error, ...\nКлиент принимает решения ПО КОДУ, а не по тексту:\nтекст можно переписать или перевести, код — контракт.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_apperr.Code"
+                        }
+                    ]
+                },
+                "details": {
+                    "description": "Details — пояснения по конкретным полям при ошибке валидации.\nomitempty: в остальных случаях ключа в JSON просто не будет.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "message": {
+                    "description": "Message — человекочитаемое описание. Безопасное: без имён таблиц,\nSQL и стектрейсов.",
+                    "type": "string"
+                },
+                "request_id": {
+                    "description": "RequestID — чтобы пользователь мог назвать его в поддержке,\nа мы по нему нашли весь запрос в логах.",
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_vitikevich-landau_clients-api_internal_response.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "$ref": "#/definitions/github_com_vitikevich-landau_clients-api_internal_response.ErrorBody"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Введите: Bearer \u003cваш JWT\u003e",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

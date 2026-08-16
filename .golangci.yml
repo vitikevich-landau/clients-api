@@ -1,0 +1,79 @@
+# Конфигурация golangci-lint — агрегатора статических анализаторов.
+#
+# Запуск: make lint
+# Установка: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+#
+# Формат конфигурации — версии 2 (актуальная ветка golangci-lint).
+# Если у тебя стоит v1, самый простой путь — обновиться;
+# либо убрать строку version и переписать блоки по документации v1.
+
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  # standard — набор, включённый по умолчанию:
+  # errcheck, govet, ineffassign, staticcheck, unused.
+  default: standard
+
+  enable:
+    # --- Про ошибки ---
+    - errorlint     # ищет сравнение ошибок через == вместо errors.Is
+    - nilerr        # возврат nil там, где ошибка не nil — частая опечатка
+
+    # --- Про безопасность ---
+    - bodyclose     # незакрытое тело HTTP-ответа = утечка соединений
+    - noctx         # HTTP-запрос без context = его нельзя отменить
+    - rowserrcheck  # незакрытые sql.Rows
+
+    # --- Про качество кода ---
+    - misspell      # опечатки в английских словах
+    - unconvert     # бессмысленные преобразования типов
+    - wastedassign  # присвоение, результат которого никто не читает
+    - prealloc      # срез в цикле без предварительного make(..., 0, n)
+    - copyloopvar   # устаревшее копирование переменной цикла (с Go 1.22 не нужно)
+
+    # --- Про производительность и раскладку ---
+    # fieldalignment находит структуры, где перестановка полей
+    # уменьшит размер за счёт паддинга. Полезно для структур,
+    # которых в памяти миллионы.
+    - govet
+
+  settings:
+    govet:
+      enable:
+        - fieldalignment
+
+    errcheck:
+      # Проверять и конструкции вида `defer f.Close()`.
+      check-blank: true
+
+    misspell:
+      locale: US
+
+  exclusions:
+    rules:
+      # В тестах допустимы игнорирование ошибок и длинные функции.
+      - path: _test\.go
+        linters:
+          - errcheck
+          - prealloc
+
+      # Сгенерированный swag-ом код не наш, править его бессмысленно.
+      - path: ^docs/
+        linters:
+          - misspell
+          - unused
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+  settings:
+    goimports:
+      # Импорты нашего модуля выносятся в отдельную группу
+      # после стандартной библиотеки и внешних зависимостей.
+      local-prefixes:
+        - github.com/vitikevich-landau/clients-api
